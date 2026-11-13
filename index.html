@@ -14,7 +14,7 @@
 
     <header class="sticky top-0 z-30 border-b border-linha bg-white/90 backdrop-blur-md">
       <div class="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-8">
-        <a href="/" class="flex shrink-0 items-center" aria-label="Fatura Fhemig Online — página inicial">
+        <a href="/" id="link-inicio" class="flex shrink-0 items-center" aria-label="Fatura Fhemig Online — página inicial">
           <img src="/marca/fhemig.png" alt="FHEMIG — Fundação Hospitalar do Estado de Minas Gerais" width="160" height="32" class="h-7 w-auto sm:h-8" />
         </a>
         <span class="hidden h-7 w-px bg-linha md:block" aria-hidden="true"></span>
@@ -36,7 +36,8 @@
       </nav>
     </header>
 
-    <main id="conteudo" class="mx-auto max-w-7xl px-4 pt-8 pb-20 sm:px-8">
+    <section id="inicio" aria-label="Página inicial" hidden></section>
+    <main id="conteudo" hidden class="mx-auto max-w-7xl px-4 pt-8 pb-20 sm:px-8">
       <p id="unidade-ajuda" class="sr-only">Escolha a unidade da FHEMIG. As planilhas da unidade são carregadas automaticamente.</p>
       <div id="paineis"></div>
     </main>
