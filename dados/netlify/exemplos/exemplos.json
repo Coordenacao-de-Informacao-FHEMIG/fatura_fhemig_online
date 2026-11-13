@@ -3,22 +3,22 @@
     {
       "papel": "entrada_txt",
       "unidade": "HJXXIII",
-      "nome": "SISAIH01_HJXXIII_202609_TESTE.txt",
-      "caminho": "exemplos/hospitalar/SISAIH01_HJXXIII_202609_TESTE.txt"
+      "nome": "SISAIH01_HJXXIII_202609.txt",
+      "caminho": "exemplos/hospitalar/SISAIH01_HJXXIII_202609.txt"
     },
     {
       "papel": "entrada_pdf",
       "unidade": "HJXXIII",
-      "nome": "Espelho_AIH_HJXXIII_202609_TESTE.pdf",
-      "caminho": "exemplos/hospitalar/Espelho_AIH_HJXXIII_202609_TESTE.pdf"
+      "nome": "Espelho_AIH_HJXXIII_202609.pdf",
+      "caminho": "exemplos/hospitalar/Espelho_AIH_HJXXIII_202609.pdf"
     }
   ],
   "ambulatorial": [
     {
       "papel": "entrada",
       "unidade": "HRBJA",
-      "nome": "BPA_HRBJA_202610_TESTE.txt",
-      "caminho": "exemplos/ambulatorial/BPA_HRBJA_202610_TESTE.txt"
+      "nome": "BPA_HRBJA_202610.txt",
+      "caminho": "exemplos/ambulatorial/BPA_HRBJA_202610.txt"
     },
     {
       "papel": "entrada_alternativa",
@@ -31,20 +31,20 @@
     {
       "papel": "tasy",
       "unidade": "HIJPII",
-      "nome": "Tasy Profissionais HIJPII (TESTE).xlsx",
-      "caminho": "exemplos/checa/Tasy Profissionais HIJPII (TESTE).xlsx"
+      "nome": "Tasy Profissionais HIJPII.xlsx",
+      "caminho": "exemplos/checa/Tasy Profissionais HIJPII.xlsx"
     },
     {
       "papel": "cnes",
       "unidade": "HIJPII",
-      "nome": "CNES Profissionais HIJPII (TESTE).xlsx",
-      "caminho": "exemplos/checa/CNES Profissionais HIJPII (TESTE).xlsx"
+      "nome": "CNES Profissionais HIJPII.xlsx",
+      "caminho": "exemplos/checa/CNES Profissionais HIJPII.xlsx"
     },
     {
       "papel": "cnes_alternativo",
       "unidade": "HIJPII",
-      "nome": "CNES Profissionais HAC - UNIDADE ERRADA (TESTE).xlsx",
-      "caminho": "exemplos/checa/CNES Profissionais HAC - UNIDADE ERRADA (TESTE).xlsx"
+      "nome": "CNES Profissionais HAC - UNIDADE ERRADA.xlsx",
+      "caminho": "exemplos/checa/CNES Profissionais HAC - UNIDADE ERRADA.xlsx"
     }
   ]
 }

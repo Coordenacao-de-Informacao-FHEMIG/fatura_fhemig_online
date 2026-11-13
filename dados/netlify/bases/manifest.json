@@ -1,6 +1,6 @@
 {
   "modo": "netlify",
-  "gerado_em": "2026-11-13T12:54:16.949Z",
+  "gerado_em": "2026-11-13T14:09:42.714Z",
   "hospitalar": {
     "HJXXIII": {
       "servico": {
@@ -12,8 +12,8 @@
         "caminho": "bases/hospitalar/HJXXIII/Habilitações HJXXIII.xlsx"
       },
       "profissionais": {
-        "nome": "Profissionais HJXXIII (TESTE).xlsx",
-        "caminho": "bases/hospitalar/HJXXIII/Profissionais HJXXIII (TESTE).xlsx"
+        "nome": "Profissionais HJXXIII.xlsx",
+        "caminho": "bases/hospitalar/HJXXIII/Profissionais HJXXIII.xlsx"
       }
     },
     "HIJPII": {
@@ -30,31 +30,31 @@
   "ambulatorial": {
     "HRBJA": {
       "profissionais": {
-        "nome": "Profissionais HRBJA (TESTE).xlsx",
-        "caminho": "bases/ambulatorial/HRBJA/Profissionais HRBJA (TESTE).xlsx"
+        "nome": "Profissionais HRBJA.xlsx",
+        "caminho": "bases/ambulatorial/HRBJA/Profissionais HRBJA.xlsx"
       },
       "carga_horaria": {
-        "nome": "Carga Horária HRBJA (TESTE).xlsx",
-        "caminho": "bases/ambulatorial/HRBJA/Carga Horária HRBJA (TESTE).xlsx"
+        "nome": "Carga Horária HRBJA.xlsx",
+        "caminho": "bases/ambulatorial/HRBJA/Carga Horária HRBJA.xlsx"
       },
       "servico_classificacao": {
-        "nome": "Serviço Classificação HRBJA (TESTE).xlsx",
-        "caminho": "bases/ambulatorial/HRBJA/Serviço Classificação HRBJA (TESTE).xlsx"
+        "nome": "Serviço Classificação HRBJA.xlsx",
+        "caminho": "bases/ambulatorial/HRBJA/Serviço Classificação HRBJA.xlsx"
       },
       "habilitacao": {
-        "nome": "Habilitações HRBJA (TESTE).xlsx",
-        "caminho": "bases/ambulatorial/HRBJA/Habilitações HRBJA (TESTE).xlsx"
+        "nome": "Habilitações HRBJA.xlsx",
+        "caminho": "bases/ambulatorial/HRBJA/Habilitações HRBJA.xlsx"
       }
     }
   },
   "checa": {
     "adc": {
-      "nome": "Profissionais ADC (TESTE).xlsx",
-      "caminho": "bases/checa/Profissionais ADC (TESTE).xlsx"
+      "nome": "Profissionais ADC.xlsx",
+      "caminho": "bases/checa/Profissionais ADC.xlsx"
     },
     "cbo": {
-      "nome": "CBO_assistencial (TESTE).xlsx",
-      "caminho": "bases/checa/CBO_assistencial (TESTE).xlsx"
+      "nome": "CBO_assistencial.xlsx",
+      "caminho": "bases/checa/CBO_assistencial.xlsx"
     }
   }
 }

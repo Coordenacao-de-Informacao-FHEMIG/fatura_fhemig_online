@@ -113,10 +113,12 @@ const copiar = (origem, pastaRel) => {
     console.warn(`  (ausente, ignorado) ${origem}`);
     return null;
   }
-  const rel = `${pastaRel}/${basename(origem)}`;
+  // No site, os nomes saem sem a marca de teste: "Profissionais HJXXIII (TESTE).xlsx" -> "Profissionais HJXXIII.xlsx".
+  const nome = basename(origem).replace(/\s*\(TESTE\)/gi, '').replace(/_TESTE(?=\.)/gi, '');
+  const rel = `${pastaRel}/${nome}`;
   mkdirSync(join(destino, dirname(rel)), { recursive: true });
   cpSync(origem, join(destino, rel));
-  return { nome: basename(origem), caminho: rel };
+  return { nome, caminho: rel };
 };
 
 const manifest = { modo, gerado_em: new Date().toISOString(), hospitalar: {}, ambulatorial: {}, checa: {} };

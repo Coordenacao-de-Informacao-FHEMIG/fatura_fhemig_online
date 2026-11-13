@@ -67,6 +67,8 @@ npm run api:demo
 npm run api:dev
 ```
 
+A Área do gestor (versão beta) tem **alarmes** da competência: unidade sem envio, taxa de AIHs com alerta acima de 10%, alta da taxa, queda de produção, diárias de permanência a maior em alta, BPA com muitos alertas e pendências de cadastro. Os limites ficam em `src/gestao/alarmes.js`. Quem tem perfil de gestão central ou administrador pode usar o seletor **Ver como** para conferir o que o gestor de unidade e o faturista enxergam.
+
 Com `npm run dev` rodando junto, o site encaminha `/api` para a API. O login de teste é `teste@gmail.com` / `teste`. Instalação na VM, usuários, segurança e backup: [docs/IMPLANTACAO_VM.md](docs/IMPLANTACAO_VM.md), seção 5.
 
 ## Comandos

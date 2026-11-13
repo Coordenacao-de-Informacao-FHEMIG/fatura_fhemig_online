@@ -78,7 +78,9 @@ export function gerarResumosFicticios() {
       const linhasBpa = Math.round(u.bpa * sazonal);
       const bpaComAlerta = Math.round(linhasBpa * Math.max(0.02, taxa * 0.55));
       const base = { sigla: u.sigla, competencia, criado_em: `${competencia.slice(0, 4)}-${competencia.slice(4)}-28T12:00:00.000Z`, versao_regras: 'demonstração' };
-      lista.push({
+      // Lacuna proposital: o HCM ainda não enviou o Hospitalar da última competência (gera um alarme).
+      const semEnvio = u.sigla === 'HCM' && i === MESES_FICTICIOS.length - 1;
+      if (!semEnvio) lista.push({
         ...base, ferramenta: 'hospitalar', arquivo_nome: `SISAIH01_${u.sigla}_${competencia}_DEMO.txt`, arquivo_sha256: hashFicticio(`h${u.sigla}${competencia}`),
         sigtap_competencia: competencia,
         indicadores: { aihs_distintas: aihs, aihs_com_alerta: comAlerta, diarias_de_perm_a_maior: Math.round(aihs * 0.012 * (0.6 + r() * 0.8)) },

@@ -89,7 +89,7 @@ switch (comando) {
     const reais = banco.db.prepare("SELECT count(*) AS n FROM processamento WHERE versao_regras IS NOT 'demonstração'").get().n;
     if (reais) falhar('o banco já tem envios reais; a demonstração só roda em banco de testes.');
     if (!banco.usuarioPorEmail('teste@gmail.com')) {
-      banco.criarUsuario({ email: 'teste@gmail.com', nome: 'Gestor de teste', perfil: 'gestor_central', senhaHash: await gerarHash('teste') });
+      banco.criarUsuario({ email: 'teste@gmail.com', nome: 'Gestor FHEMIG', perfil: 'gestor_central', senhaHash: await gerarHash('teste') });
     }
     let n = 0;
     for (const r of gerarResumosFicticios()) if (!banco.registrarProcessamento(r, null).duplicado) n += 1;
