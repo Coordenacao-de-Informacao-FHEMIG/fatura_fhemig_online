@@ -1,19 +1,29 @@
 {
   "modo": "netlify",
-  "gerado_em": "2026-11-13T12:27:19.961Z",
+  "gerado_em": "2026-11-13T12:54:16.949Z",
   "hospitalar": {
     "HJXXIII": {
       "servico": {
-        "nome": "Serviço e Classificação HJXXIII (TESTE).xlsx",
-        "caminho": "bases/hospitalar/HJXXIII/Serviço e Classificação HJXXIII (TESTE).xlsx"
+        "nome": "Serviço e Classificação HJXXIII.xlsx",
+        "caminho": "bases/hospitalar/HJXXIII/Serviço e Classificação HJXXIII.xlsx"
       },
       "habilitacao": {
-        "nome": "Habilitações HJXXIII (TESTE).xlsx",
-        "caminho": "bases/hospitalar/HJXXIII/Habilitações HJXXIII (TESTE).xlsx"
+        "nome": "Habilitações HJXXIII.xlsx",
+        "caminho": "bases/hospitalar/HJXXIII/Habilitações HJXXIII.xlsx"
       },
       "profissionais": {
         "nome": "Profissionais HJXXIII (TESTE).xlsx",
         "caminho": "bases/hospitalar/HJXXIII/Profissionais HJXXIII (TESTE).xlsx"
+      }
+    },
+    "HIJPII": {
+      "servico": {
+        "nome": "Serviço Classificação HIJPII 1 (1).xlsx",
+        "caminho": "bases/hospitalar/HIJPII/Serviço Classificação HIJPII 1 (1).xlsx"
+      },
+      "habilitacao": {
+        "nome": "Habilitacao HIJPII 1 (1).xlsx",
+        "caminho": "bases/hospitalar/HIJPII/Habilitacao HIJPII 1 (1).xlsx"
       }
     }
   },

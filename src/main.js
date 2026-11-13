@@ -503,7 +503,7 @@ async function montarDemo() {
   aviso.classList.remove('hidden');
   aviso.innerHTML = `<div class="flex items-start gap-3 rounded-lg border border-turquesa-100 bg-turquesa-50/90 px-4 py-3 text-sm text-azul">
     <span class="mt-px grid size-5 shrink-0 place-items-center rounded-full bg-turquesa text-[11px] font-bold text-white" aria-hidden="true">i</span>
-    <p><strong>Ambiente de testes.</strong> Somente dados simulados (pacientes e profissionais fictícios). Use “Arquivos de teste”, ao lado do botão Processar, ou envie os arquivos da pasta <em>arquivos de teste</em>.</p>
+    <p><strong>Ambiente de testes.</strong> Pacientes e profissionais fictícios. Habilitação e Serviço/Classificação de HJXXIII e HIJPII são as planilhas reais. Use “Arquivos de teste”, ao lado do botão Processar, ou envie os arquivos da pasta <em>arquivos de teste</em>.</p>
   </div>`;
   for (const f of FERRAMENTAS) {
     const itens = (estado.exemplos[f.id] || []).filter((x) => ROTULO_DEMO[x.papel]);

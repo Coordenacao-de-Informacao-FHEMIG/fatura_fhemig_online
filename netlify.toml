@@ -1,4 +1,5 @@
-# Netlify: ambiente de TESTES, somente com os dados simulados de "arquivos de teste".
+# Netlify: ambiente de TESTES. Pacientes e profissionais simulados ("arquivos de teste");
+# Habilitação e Serviço/Classificação reais de HJXXIII e HIJPII (sem dados pessoais).
 # O build "netlify" nunca inclui as bases reais das unidades (essas ficam em dados/vm, fora do git).
 [build]
   command = "npm run build"

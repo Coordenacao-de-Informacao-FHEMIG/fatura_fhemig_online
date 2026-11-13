@@ -48,7 +48,7 @@ São as planilhas que ficavam ao lado do `.exe`: Serviço/Classificação, Habil
 
 | Modo | Origem das bases | Pasta | Uso |
 | --- | --- | --- | --- |
-| `netlify` | Só os dados **simulados** de `../arquivos de teste` | `dados/netlify/` (versionada) | Ambiente de testes, com botões "Modo demonstração" |
+| `netlify` | Pacientes e profissionais **simulados** de `arquivos de teste`; Habilitação e Serviço/Classificação **reais** de HJXXIII e HIJPII | `dados/netlify/` (versionada) | Ambiente de testes, com botões "Modo demonstração" |
 | `vm` | Planilhas reais que existem hoje na pasta do projeto, listadas em `scripts/preparar-dados.mjs` | `dados/vm/` (fora do git, exceto Habilitação e Serviço/Classificação) | VM do Governo de MG |
 
 Habilitação e Serviço/Classificação reais estão versionadas: são cadastro da unidade, sem dados pessoais. Profissionais, Carga horária e ADC têm nome, CPF e CNS de servidores, por isso ficam fora do git, que é público, e nunca vão para o Netlify. Em cada computador novo, copie essas planilhas para `dados/vm/` ou rode `node scripts/preparar-dados.mjs vm`. Para incluir outras unidades, acrescente-as em `scripts/preparar-dados.mjs`, no bloco `vm`.
@@ -101,7 +101,7 @@ npm run preview
 | `npm run dev` | Desenvolvimento em http://localhost:5173 (modo netlify) |
 | `npm run dev:vm` | Desenvolvimento com as bases **reais** de `dados/vm` (Profissionais e Carga horária ficam só neste computador). Use para testar contas reais localmente |
 | `npm test` | Testes de paridade com os `.exe` |
-| `npm run build` | Gera `dist/`, o build do Netlify (só dados simulados) |
+| `npm run build` | Gera `dist/`, o build do Netlify (sem dados pessoais reais) |
 | `npm run build:vm` | Gera `dist-vm/`, o build da VM (bases reais) |
 | `npm run preview` | Serve o `dist/` com os mesmos cabeçalhos de segurança da produção |
 

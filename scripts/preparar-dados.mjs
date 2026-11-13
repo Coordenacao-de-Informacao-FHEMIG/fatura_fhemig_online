@@ -1,6 +1,6 @@
 // Monta as bases das unidades e os exemplos servidos pelo site.
 //
-//   node scripts/preparar-dados.mjs netlify   -> dados/netlify (SO dados sinteticos de "arquivos de teste")
+//   node scripts/preparar-dados.mjs netlify   -> dados/netlify (pacientes/profissionais sinteticos + Habilitacao e Servico reais, sem dados pessoais)
 //   node scripts/preparar-dados.mjs vm        -> dados/vm (planilhas reais das unidades; pasta fora do git)
 //
 // Cada modo gera bases/manifest.json, que o site le para carregar sozinho as
@@ -13,15 +13,23 @@ const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PAI = resolve(RAIZ, '..');
 // Massa sintetica de teste: dentro do repositorio (ou, no layout antigo, na pasta-mae).
 const TESTE = existsSync(join(RAIZ, 'arquivos de teste')) ? join(RAIZ, 'arquivos de teste') : join(PAI, 'arquivos de teste');
+// Planilhas reais SEM dados pessoais, versionadas no git (ver .gitignore).
+const REAIS = join(RAIZ, 'dados', 'vm', 'bases');
 const modo = process.argv[2] || 'netlify';
 
 const FONTES = {
   netlify: {
+    // Habilitação e Serviço/Classificação REAIS (versionadas em dados/vm; sem dados pessoais).
+    // Profissionais continua simulado: a planilha real tem nome, CPF e CNS e nunca vai para o Netlify.
     hospitalar: {
       HJXXIII: {
-        servico: join(TESTE, 'teste Hospitalar', 'Serviço e Classificação HJXXIII (TESTE).xlsx'),
-        habilitacao: join(TESTE, 'teste Hospitalar', 'Habilitações HJXXIII (TESTE).xlsx'),
+        servico: join(REAIS, 'hospitalar', 'HJXXIII', 'Serviço e Classificação HJXXIII.xlsx'),
+        habilitacao: join(REAIS, 'hospitalar', 'HJXXIII', 'Habilitações HJXXIII.xlsx'),
         profissionais: join(TESTE, 'teste Hospitalar', 'Profissionais HJXXIII (TESTE).xlsx'),
+      },
+      HIJPII: {
+        servico: join(REAIS, 'hospitalar', 'HIJPII', 'Serviço Classificação HIJPII 1 (1).xlsx'),
+        habilitacao: join(REAIS, 'hospitalar', 'HIJPII', 'Habilitacao HIJPII 1 (1).xlsx'),
       },
     },
     ambulatorial: {
