@@ -1,0 +1,12 @@
+node_modules/
+dist/
+dist-*/
+# Bases reais das unidades (nome, CPF e CNS de servidores). Nunca versionar nem publicar no Netlify.
+dados/vm/
+*.log
+.DS_Store
+# banco da API (fica so na VM)
+dados-api/
+*.db
+*.db-wal
+*.db-shm

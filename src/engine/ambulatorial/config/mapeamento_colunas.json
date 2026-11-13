@@ -1,0 +1,63 @@
+{
+  "_descricao": "Sinonimos dos cabecalhos das planilhas. A comparacao ignora acentos, maiusculas, espacos e pontuacao ('Comp. Inicial' = 'COMP INICIAL' = 'compinicial'). 'obrigatorias' e uma lista de alternativas: basta uma delas estar completa. O cabecalho e procurado nas 20 primeiras linhas de cada aba.",
+  "profissionais": {
+    "descricao": "Profissionais",
+    "colunas": {
+      "CNS": ["CNS", "CNS PROFISSIONAL", "CNS DO PROFISSIONAL", "CARTAO SUS", "CARTAO NACIONAL DE SAUDE"],
+      "NOME": ["NOME", "NOME PROFISSIONAL", "NOME DO PROFISSIONAL", "PROFISSIONAL"],
+      "CBO": ["CBO", "CBO PROFISSIONAL", "CODIGO CBO", "COD CBO", "OCUPACAO"],
+      "CPF": ["CPF", "CPF PROFISSIONAL"],
+      "VINCULO": ["VINCULO", "TIPO VINCULO", "TIPO DE VINCULO", "VINCULACAO"]
+    },
+    "obrigatorias": [["CNS", "NOME", "CBO"]]
+  },
+  "carga_horaria": {
+    "descricao": "Carga horária",
+    "colunas": {
+      "CNS": ["CNS", "CNS PROFISSIONAL", "CNS DO PROFISSIONAL", "CARTAO SUS"],
+      "CBO": ["CBO", "CBO PROFISSIONAL", "CODIGO CBO", "COD CBO", "OCUPACAO"],
+      "CH_AMBULATORIAL": ["CH_AMBULATORIAL", "AMB", "AMB.", "AMBULATORIAL", "CH AMBULATORIAL", "CH AMB", "CARGA HORARIA AMBULATORIAL", "CARGA HORARIA AMB"],
+      "CH_HOSPITALAR": ["CH_HOSPITALAR", "HOSP", "HOSP.", "HOSPITALAR", "CH HOSPITALAR", "CH HOSP", "CARGA HORARIA HOSPITALAR"],
+      "CH_OUTROS": ["CH_OUTROS", "OUTROS", "CH OUTROS", "OUTRAS", "CARGA HORARIA OUTROS"],
+      "NOME": ["NOME", "NOME PROFISSIONAL", "PROFISSIONAL"],
+      "CPF": ["CPF"]
+    },
+    "obrigatorias": [["CNS", "CBO", "CH_AMBULATORIAL"]]
+  },
+  "servico_classificacao": {
+    "descricao": "Serviço/Classificação",
+    "colunas": {
+      "CODIGO": ["CODIGO", "COD", "CODIGO SERVICO CLASSIFICACAO", "SERVICO CLASSIFICACAO CODIGO", "COD SERV CLASS"],
+      "CO_SERVICO": ["CO_SERVICO", "COD SERVICO", "CODIGO SERVICO", "CODIGO DO SERVICO"],
+      "CO_CLASSIFICACAO": ["CO_CLASSIFICACAO", "COD CLASSIFICACAO", "CODIGO CLASSIFICACAO", "CODIGO DA CLASSIFICACAO"],
+      "NO_SERVICO": ["SERVICO", "NOME SERVICO", "DESCRICAO SERVICO"],
+      "NO_CLASSIFICACAO": ["CLASSIFICACAO", "NOME CLASSIFICACAO", "DESCRICAO CLASSIFICACAO"],
+      "TERCEIRO": ["TERCEIRO", "TERCEIRIZADO", "EXECUCAO TERCEIRO"],
+      "CNES": ["CNES", "CNES EXECUTANTE", "CNES TERCEIRO"]
+    },
+    "obrigatorias": [["CODIGO"], ["CO_SERVICO", "CO_CLASSIFICACAO"]]
+  },
+  "habilitacao": {
+    "descricao": "Habilitação",
+    "colunas": {
+      "CO_HABILITACAO": ["HABILITACAO", "CO_HABILITACAO", "CODIGO HABILITACAO", "COD HABILITACAO"],
+      "VIGENCIA_INICIO": ["COMP INICIAL", "COMPETENCIA INICIAL", "VIGENCIA INICIO", "VIGENCIA_INICIO", "INICIO VIGENCIA", "INICIO"],
+      "VIGENCIA_FIM": ["COMP FINAL", "COMPETENCIA FINAL", "VIGENCIA FIM", "VIGENCIA_FIM", "FIM VIGENCIA", "FIM"],
+      "CNES": ["CNES"]
+    },
+    "obrigatorias": [["CO_HABILITACAO"]]
+  },
+  "sigtap": {
+    "descricao": "Planilha SIGTAP",
+    "colunas": {
+      "CODIGO": ["CODIGO", "CO_PROCEDIMENTO", "CODIGO PROCEDIMENTO"],
+      "PROCEDIMENTO": ["PROCEDIMENTO", "NO_PROCEDIMENTO", "NOME PROCEDIMENTO"],
+      "HABILITACAO": ["HABILITACAO"],
+      "HABILITACAO_GRUPO": ["HABILITACAO POR GRUPO", "HABILITACAO (POR GRUPO)", "HABILITACAO GRUPO"],
+      "SERVICO_CLASSIFICACAO": ["SERVICO / CLASSIFICACAO", "SERVICO CLASSIFICACAO", "SERVICO/CLASSIFICACAO"],
+      "ATRIBUTO_COMPLEMENTAR": ["ATRIBUTO COMPLEMENTAR", "ATRIBUTOS COMPLEMENTARES"],
+      "INSTRUMENTO_REGISTRO": ["INSTRUMENTO DE REGISTRO", "INSTRUMENTO REGISTRO"]
+    },
+    "obrigatorias": [["PROCEDIMENTO", "HABILITACAO", "SERVICO_CLASSIFICACAO", "ATRIBUTO_COMPLEMENTAR"]]
+  }
+}

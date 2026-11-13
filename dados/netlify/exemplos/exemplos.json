@@ -1,0 +1,50 @@
+{
+  "hospitalar": [
+    {
+      "papel": "entrada_txt",
+      "unidade": "HJXXIII",
+      "nome": "SISAIH01_HJXXIII_202609_TESTE.txt",
+      "caminho": "exemplos/hospitalar/SISAIH01_HJXXIII_202609_TESTE.txt"
+    },
+    {
+      "papel": "entrada_pdf",
+      "unidade": "HJXXIII",
+      "nome": "Espelho_AIH_HJXXIII_202609_TESTE.pdf",
+      "caminho": "exemplos/hospitalar/Espelho_AIH_HJXXIII_202609_TESTE.pdf"
+    }
+  ],
+  "ambulatorial": [
+    {
+      "papel": "entrada",
+      "unidade": "HRBJA",
+      "nome": "BPA_HRBJA_202610_TESTE.txt",
+      "caminho": "exemplos/ambulatorial/BPA_HRBJA_202610_TESTE.txt"
+    },
+    {
+      "papel": "entrada_alternativa",
+      "unidade": "HRBJA",
+      "nome": "BPA_HRBJA_202610_CABECALHO_INCONSISTENTE.txt",
+      "caminho": "exemplos/ambulatorial/BPA_HRBJA_202610_CABECALHO_INCONSISTENTE.txt"
+    }
+  ],
+  "checa": [
+    {
+      "papel": "tasy",
+      "unidade": "HIJPII",
+      "nome": "Tasy Profissionais HIJPII (TESTE).xlsx",
+      "caminho": "exemplos/checa/Tasy Profissionais HIJPII (TESTE).xlsx"
+    },
+    {
+      "papel": "cnes",
+      "unidade": "HIJPII",
+      "nome": "CNES Profissionais HIJPII (TESTE).xlsx",
+      "caminho": "exemplos/checa/CNES Profissionais HIJPII (TESTE).xlsx"
+    },
+    {
+      "papel": "cnes_alternativo",
+      "unidade": "HIJPII",
+      "nome": "CNES Profissionais HAC - UNIDADE ERRADA (TESTE).xlsx",
+      "caminho": "exemplos/checa/CNES Profissionais HAC - UNIDADE ERRADA (TESTE).xlsx"
+    }
+  ]
+}

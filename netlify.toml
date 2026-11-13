@@ -1,0 +1,30 @@
+# Netlify: ambiente de TESTES, somente com os dados simulados de "arquivos de teste".
+# O build "netlify" nunca inclui as bases reais das unidades (essas ficam em dados/vm, fora do git).
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
+    X-Robots-Tag = "noindex, nofollow"
+    Cross-Origin-Opener-Policy = "same-origin"
+
+# Bases SIGTAP ja comprimidas (gzip): servir como binario, sem recomprimir.
+[[headers]]
+  for = "/sigtap/*.dat"
+  [headers.values]
+    Content-Type = "application/octet-stream"
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

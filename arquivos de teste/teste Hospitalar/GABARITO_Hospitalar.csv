@@ -1,0 +1,16 @@
+﻿Gabarito - Fatura Fhemig Hospitalar (TXT e PDF trazem as mesmas AIHs)
+Caso;AIH;Cenario;Alertas esperados
+H01;312600000001-1;AIH limpa (profissional identificado por CPF);Nenhum alerta
+H02;312600000002-2;Admite permanencia a maior (atributo 004, 15 dias para media 4);Admite permanência à maior (7 diárias: 15 dias - 2 x média 4)
+H03;312600000003-3;UTI pediatrica sem habilitacao 2606 na unidade;Sem habilitação (linha 2 - 0802010075 exige 2606)
+H04;312600000004-4;Tomografias acima do limite e servico nao apresentado;Quantidade acima da máxima (linhas 2 e 3 - total 5 tomografias > 3 por AIH) | Serviço não apresentado (linha 3 - tomografia sem 121-003)
+H05;312600000005-5;Unidade sem servico exigido e servico so de terceiro com CNES diferente;Estabelecimento não possui serviço/classificação (linha 1 - 131-002 não cadastrado) | Estabelecimento não possui serviço/classificação (linha 2 - 126-001 só de terceiro 7777777)
+H06;312600000006-6;CBO incompativel (enfermeiro em tratamento clinico);CBO incompatível (223505 fora da lista do SIGTAP)
+H07;312600000007-7;CBO nao informado;CBO não informado
+H08;312600000008-8;Profissional/CBO nao cadastrado na planilha de Profissionais;Profissional/CBO não cadastrado
+H09;312600000009-9;Sexo incompativel (RM de prostata em paciente feminina);Sexo incompatível (linha 2 - 0207030057 só masculino)
+H10;312600000010-0;Idade incompativel (parto normal aos 66 anos);"Idade incompatível (66 anos; faixa do SIGTAP 9 a 60 anos)"
+H11;312600000011-1;Reinternacao: 1a internacao do paciente;Nenhum alerta (coluna REINTERNOU = NAO)
+H12;312600000012-2;Reinternacao em menos de 72h (mesmo paciente da H11);Nenhum alerta (colunas REINTERNOU = SIM e MENOS DE 72H = SIM)
+H13;312600000013-3;AIH com 11 procedimentos (registro de continuacao tipo 03);Nenhum alerta (testa a leitura do registro tipo 03)
+H14;312600000014-4;Cirurgia com 2o executante (anestesista 225151 dispensa CBO);Nenhum alerta (exceção do 2º executante e de cirurgia no HJXXIII)

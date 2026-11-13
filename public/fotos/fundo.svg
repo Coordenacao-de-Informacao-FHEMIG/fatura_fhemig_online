@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice">
+  <!-- Ilustracao provisoria de fachadas hospitalares (substituir por foto oficial da FHEMIG). -->
+  <defs>
+    <linearGradient id="ceu" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e6f6fb"/>
+      <stop offset="1" stop-color="#ffffff"/>
+    </linearGradient>
+    <linearGradient id="predio" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#00afd2" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#00486c" stop-opacity="0.16"/>
+    </linearGradient>
+    <linearGradient id="predio2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0092c3" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#00486c" stop-opacity="0.10"/>
+    </linearGradient>
+    <pattern id="janelas" width="34" height="38" patternUnits="userSpaceOnUse">
+      <rect x="8" y="10" width="16" height="20" rx="2" fill="#ffffff" fill-opacity="0.55"/>
+    </pattern>
+  </defs>
+  <rect width="1600" height="900" fill="url(#ceu)"/>
+  <g opacity="0.9">
+    <rect x="60" y="430" width="260" height="470" fill="url(#predio2)"/>
+    <rect x="60" y="430" width="260" height="470" fill="url(#janelas)"/>
+    <rect x="300" y="300" width="360" height="600" fill="url(#predio)"/>
+    <rect x="300" y="300" width="360" height="600" fill="url(#janelas)"/>
+    <g transform="translate(450 330)">
+      <rect x="0" y="-8" width="60" height="76" rx="8" fill="#ffffff" fill-opacity="0.85"/>
+      <rect x="22" y="2" width="16" height="56" rx="3" fill="#0092c3"/>
+      <rect x="2" y="22" width="56" height="16" rx="3" fill="#0092c3"/>
+    </g>
+    <rect x="680" y="380" width="300" height="520" fill="url(#predio2)"/>
+    <rect x="680" y="380" width="300" height="520" fill="url(#janelas)"/>
+    <rect x="1000" y="250" width="320" height="650" fill="url(#predio)"/>
+    <rect x="1000" y="250" width="320" height="650" fill="url(#janelas)"/>
+    <rect x="1340" y="460" width="240" height="440" fill="url(#predio2)"/>
+    <rect x="1340" y="460" width="240" height="440" fill="url(#janelas)"/>
+    <rect x="0" y="860" width="1600" height="40" fill="#00486c" fill-opacity="0.08"/>
+  </g>
+</svg>

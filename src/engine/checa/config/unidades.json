@@ -1,0 +1,23 @@
+{
+  "_descricao": "Unidades FHEMIG. A unidade do Tasy é identificada pelo 'Cd estabelecimento' (codigo_tasy) e, se ele não estiver cadastrado, pela sigla da coluna 'Estabelcimento' (sigla ou apelidos). A unidade do CNES é identificada pelo número no título do arquivo (ex.: 'CNES : 0026964 - HOSPITAL ALBERTO CAVALCANTI'). As duas precisam apontar para a mesma unidade. CNES herdado do Fatura Fhemig; codigo_tasy confirmado nas planilhas de HAC (4), HJK (3) e HIJPII (8). Preencha o codigo_tasy das demais unidades quando elas enviarem a primeira planilha.",
+  "versao": "2026-10-27",
+  "adc": {"sigla": "ADC", "codigo_tasy": "1", "nome": "Administração Central"},
+  "unidades": [
+    {"sigla": "HJXXIII", "cnes": "0026921", "codigo_tasy": null, "nome": "Hospital João XXIII", "apelidos": []},
+    {"sigla": "HIJPII", "cnes": "0026948", "codigo_tasy": "8", "nome": "Hospital Infantil João Paulo II", "apelidos": []},
+    {"sigla": "HAC", "cnes": "0026964", "codigo_tasy": "4", "nome": "Hospital Alberto Cavalcanti", "apelidos": []},
+    {"sigla": "MOV", "cnes": "0026972", "codigo_tasy": null, "nome": "Maternidade Odete Valadares", "apelidos": []},
+    {"sigla": "IRS", "cnes": "0026999", "codigo_tasy": null, "nome": "Instituto Raul Soares", "apelidos": []},
+    {"sigla": "HJK", "cnes": "0027022", "codigo_tasy": "3", "nome": "Hospital Júlia Kubitschek", "apelidos": []},
+    {"sigla": "CHPB", "cnes": "2098946", "codigo_tasy": null, "nome": "Centro Hospitalar Psiquiátrico de Barbacena", "apelidos": []},
+    {"sigla": "CSSFA", "cnes": "2105799", "codigo_tasy": null, "nome": "CSSFA", "apelidos": []},
+    {"sigla": "HRJP", "cnes": "2111624", "codigo_tasy": null, "nome": "Hospital Regional João Penido", "apelidos": []},
+    {"sigla": "CSSI", "cnes": "2115654", "codigo_tasy": null, "nome": "CSSI", "apelidos": []},
+    {"sigla": "HCM", "cnes": "2115662", "codigo_tasy": null, "nome": "Hospital Cristiano Machado", "apelidos": []},
+    {"sigla": "HEM", "cnes": "2181770", "codigo_tasy": null, "nome": "Hospital Eduardo de Menezes", "apelidos": []},
+    {"sigla": "CSPD", "cnes": "2195429", "codigo_tasy": null, "nome": "Casa de Saúde Padre Damião", "apelidos": []},
+    {"sigla": "HRAD", "cnes": "2726726", "codigo_tasy": null, "nome": "Hospital Regional Antônio Dias", "apelidos": []},
+    {"sigla": "CSSFE", "cnes": "2775905", "codigo_tasy": null, "nome": "CSSFE", "apelidos": []},
+    {"sigla": "HRBJA", "cnes": "3698548", "codigo_tasy": null, "nome": "Hospital Regional de Barbacena Dr. José Américo", "apelidos": ["HRB"]}
+  ]
+}

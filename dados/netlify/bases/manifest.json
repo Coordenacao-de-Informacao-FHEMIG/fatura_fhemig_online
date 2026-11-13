@@ -1,0 +1,50 @@
+{
+  "modo": "netlify",
+  "gerado_em": "2026-11-13T12:27:19.961Z",
+  "hospitalar": {
+    "HJXXIII": {
+      "servico": {
+        "nome": "Serviço e Classificação HJXXIII (TESTE).xlsx",
+        "caminho": "bases/hospitalar/HJXXIII/Serviço e Classificação HJXXIII (TESTE).xlsx"
+      },
+      "habilitacao": {
+        "nome": "Habilitações HJXXIII (TESTE).xlsx",
+        "caminho": "bases/hospitalar/HJXXIII/Habilitações HJXXIII (TESTE).xlsx"
+      },
+      "profissionais": {
+        "nome": "Profissionais HJXXIII (TESTE).xlsx",
+        "caminho": "bases/hospitalar/HJXXIII/Profissionais HJXXIII (TESTE).xlsx"
+      }
+    }
+  },
+  "ambulatorial": {
+    "HRBJA": {
+      "profissionais": {
+        "nome": "Profissionais HRBJA (TESTE).xlsx",
+        "caminho": "bases/ambulatorial/HRBJA/Profissionais HRBJA (TESTE).xlsx"
+      },
+      "carga_horaria": {
+        "nome": "Carga Horária HRBJA (TESTE).xlsx",
+        "caminho": "bases/ambulatorial/HRBJA/Carga Horária HRBJA (TESTE).xlsx"
+      },
+      "servico_classificacao": {
+        "nome": "Serviço Classificação HRBJA (TESTE).xlsx",
+        "caminho": "bases/ambulatorial/HRBJA/Serviço Classificação HRBJA (TESTE).xlsx"
+      },
+      "habilitacao": {
+        "nome": "Habilitações HRBJA (TESTE).xlsx",
+        "caminho": "bases/ambulatorial/HRBJA/Habilitações HRBJA (TESTE).xlsx"
+      }
+    }
+  },
+  "checa": {
+    "adc": {
+      "nome": "Profissionais ADC (TESTE).xlsx",
+      "caminho": "bases/checa/Profissionais ADC (TESTE).xlsx"
+    },
+    "cbo": {
+      "nome": "CBO_assistencial (TESTE).xlsx",
+      "caminho": "bases/checa/CBO_assistencial (TESTE).xlsx"
+    }
+  }
+}

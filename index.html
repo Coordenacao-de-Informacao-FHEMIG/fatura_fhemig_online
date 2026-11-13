@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Conferência do faturamento hospitalar (AIH), ambulatorial (BPA) e do cadastro de profissionais (Tasy x CNES) da FHEMIG. Processamento local, no próprio navegador." />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Fatura Fhemig Online</title>
+    <link rel="icon" href="/marca/icone.svg" type="image/svg+xml" />
+  </head>
+  <body class="relative">
+    <div class="fundo" aria-hidden="true"></div>
+    <a href="#conteudo" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 btn-primario">Ir para o conteúdo</a>
+
+    <header class="sticky top-0 z-30 border-b border-linha bg-white/90 backdrop-blur-md">
+      <div class="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-8">
+        <a href="/" class="flex shrink-0 items-center" aria-label="Fatura Fhemig Online — página inicial">
+          <img src="/marca/fhemig.png" alt="FHEMIG — Fundação Hospitalar do Estado de Minas Gerais" width="160" height="32" class="h-7 w-auto sm:h-8" />
+        </a>
+        <span class="hidden h-7 w-px bg-linha md:block" aria-hidden="true"></span>
+        <span class="display hidden text-[17px] font-bold text-azul md:block">Fatura Fhemig Online</span>
+        <div class="ml-auto flex min-w-0 items-center gap-3" id="seletor-unidade">
+          <label for="unidade" class="rotulo hidden sm:block">Unidade</label>
+          <select id="unidade" class="campo w-40 font-semibold sm:w-72" aria-describedby="unidade-ajuda">
+            <option value="">Selecione a unidade…</option>
+          </select>
+        </div>
+        <span class="hidden h-7 w-px bg-linha sm:block" aria-hidden="true"></span>
+        <button type="button" id="botao-gestor" class="btn-secundario shrink-0 px-3" aria-haspopup="dialog">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="size-4" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+          <span class="hidden sm:inline" data-rotulo-gestor>Área do gestor</span>
+        </button>
+      </div>
+      <nav class="mx-auto max-w-7xl overflow-x-auto px-4 [scrollbar-width:none] sm:px-8 [&::-webkit-scrollbar]:hidden" aria-label="Ferramentas" id="nav-ferramentas">
+        <div class="flex gap-6 sm:gap-9" role="tablist" id="abas"></div>
+      </nav>
+    </header>
+
+    <main id="conteudo" class="mx-auto max-w-7xl px-4 pt-8 pb-20 sm:px-8">
+      <div id="aviso-demo" class="mb-6 hidden" role="note"></div>
+      <p id="unidade-ajuda" class="sr-only">Escolha a unidade da FHEMIG. As planilhas da unidade são carregadas automaticamente.</p>
+      <div id="paineis"></div>
+    </main>
+    <section id="area-gestor" class="mx-auto max-w-7xl px-4 pt-8 pb-20 sm:px-8" aria-label="Painel gerencial" hidden></section>
+
+    <footer class="border-t border-linha bg-white/70">
+      <div class="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-8 sm:px-8">
+        <div class="flex flex-wrap items-center gap-6" id="marcas-rodape" aria-label="Marcas institucionais" hidden></div>
+        <div class="space-y-1 text-[13px] text-suave">
+          <p>Fatura Fhemig Online <span id="versao"></span> · regras do Hospitalar 14.3, Ambulatorial 1.0 e ChecaProfissionais 2.0</p>
+          <p>Os arquivos são analisados neste computador e não são enviados pela internet. Alerta automatizado não é glosa definitiva.</p>
+        </div>
+      </div>
+    </footer>
+    <dialog id="dialogo-gestor" class="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-xl border border-linha p-0 shadow-2xl backdrop:bg-azul-900/30" aria-label="Área do gestor"></dialog>
+    <div id="toast" class="pointer-events-none fixed inset-x-0 bottom-5 z-50 flex justify-center px-4" aria-live="polite"></div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

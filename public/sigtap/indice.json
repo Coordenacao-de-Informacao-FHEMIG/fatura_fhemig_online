@@ -1,0 +1,24 @@
+{
+  "bases": [
+    {
+      "arquivo": "sigtap_202610_planilha.dat",
+      "tipo": "xlsx",
+      "competencia": "202610",
+      "rotulo": "Planilha SIGTAP102026.xlsx",
+      "usos": [
+        "hospitalar",
+        "ambulatorial"
+      ]
+    },
+    {
+      "arquivo": "sigtap_202609.dat",
+      "tipo": "txt",
+      "competencia": "202609",
+      "rotulo": "Tabela SIGTAP DATASUS (TXT) 09/2026",
+      "usos": [
+        "hospitalar",
+        "ambulatorial"
+      ]
+    }
+  ]
+}

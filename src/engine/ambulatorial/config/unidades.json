@@ -1,0 +1,17 @@
+{
+  "_descricao": "Identificacao da unidade e busca automatica das planilhas. A unidade e reconhecida pelo CNES das linhas do TXT ou pela sigla no nome do arquivo/cabecalho. Na busca automatica, o nome da planilha precisa conter a sigla (ou um apelido) da unidade e uma palavra de 'incluir', sem nenhuma de 'excluir'. Preencha o CNES das unidades que ainda estao vazias quando confirmado no CNES.",
+  "unidades": [
+    {"sigla": "CHPB", "cnes": "2098946", "nome": "Centro Hospitalar Psiquiátrico de Barbacena", "apelidos": []},
+    {"sigla": "HRBJA", "cnes": "3698548", "nome": "Hospital Regional de Barbacena Dr. José Américo", "apelidos": []},
+    {"sigla": "HJXXIII", "cnes": "", "nome": "Hospital João XXIII", "apelidos": []},
+    {"sigla": "HIJPII", "cnes": "", "nome": "Hospital Infantil João Paulo II", "apelidos": []}
+  ],
+  "planilhas": {
+    "profissionais": {"incluir": ["PROFISSIONA"], "excluir": ["CARGA", "HORARIA"]},
+    "carga_horaria": {"incluir": ["CARGA HORARIA", "CARGAHORARIA", "CARGA"], "excluir": []},
+    "servico_classificacao": {"incluir": ["SERVICO", "CLASSIFICACAO"], "excluir": []},
+    "habilitacao": {"incluir": ["HABILITA"], "excluir": []}
+  },
+  "extensoes": [".xlsx", ".xlsm"],
+  "ignorar_prefixos": ["~$", "FaturaAmb_"]
+}

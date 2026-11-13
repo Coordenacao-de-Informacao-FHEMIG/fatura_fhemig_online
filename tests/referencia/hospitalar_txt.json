@@ -1,0 +1,448 @@
+{
+ "linhas": [
+  {
+   "aih": "312600000001-1",
+   "linha": 1,
+   "codigo": "0303140151",
+   "alertas": "",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "45 ANOS, 5 MESES",
+   "cbo": "SIM",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000002-2",
+   "linha": 1,
+   "codigo": "0303060212",
+   "alertas": "Admite permanência à maior",
+   "diarias_maior": 7,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "76 ANOS, 2 MESES",
+   "cbo": "SIM",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000003-3",
+   "linha": 1,
+   "codigo": "0303010037",
+   "alertas": "",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "8 ANOS, 6 MESES",
+   "cbo": "SIM",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000003-3",
+   "linha": 2,
+   "codigo": "0802010075",
+   "alertas": "Sem habilitação",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "8 ANOS, 6 MESES",
+   "cbo": "S/N",
+   "profissional": "NAO INFORMADO"
+  },
+  {
+   "aih": "312600000004-4",
+   "linha": 1,
+   "codigo": "0303140151",
+   "alertas": "",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "50 ANOS, 9 MESES",
+   "cbo": "SIM",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000004-4",
+   "linha": 2,
+   "codigo": "0206010079",
+   "alertas": "Quantidade acima da máxima",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "50 ANOS, 9 MESES",
+   "cbo": "S/N",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000004-4",
+   "linha": 3,
+   "codigo": "0206010079",
+   "alertas": "Serviço não apresentado | Quantidade acima da máxima",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "50 ANOS, 9 MESES",
+   "cbo": "S/N",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000005-5",
+   "linha": 1,
+   "codigo": "0303050136",
+   "alertas": "Estabelecimento não possui serviço/classificação exigido para o procedimento",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "58 ANOS, 7 MESES",
+   "cbo": "SIM",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000005-5",
+   "linha": 2,
+   "codigo": "0302010017",
+   "alertas": "Estabelecimento não possui serviço/classificação exigido para o procedimento",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "58 ANOS, 7 MESES",
+   "cbo": "SIM",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000006-6",
+   "linha": 1,
+   "codigo": "0303070102",
+   "alertas": "CBO incompatível",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "36 ANOS, 1 MESES",
+   "cbo": "NAO",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000007-7",
+   "linha": 1,
+   "codigo": "0303010010",
+   "alertas": "CBO não informado",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "41 ANOS, 4 MESES",
+   "cbo": "NAO INFORMADO",
+   "profissional": "NAO INFORMADO"
+  },
+  {
+   "aih": "312600000008-8",
+   "linha": 1,
+   "codigo": "0303140151",
+   "alertas": "Profissional/CBO não cadastrado",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "53 ANOS, 11 MESES",
+   "cbo": "SIM",
+   "profissional": "NAO"
+  },
+  {
+   "aih": "312600000009-9",
+   "linha": 1,
+   "codigo": "0303070102",
+   "alertas": "",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "46 ANOS, 9 MESES",
+   "cbo": "SIM",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000009-9",
+   "linha": 2,
+   "codigo": "0207030057",
+   "alertas": "Sexo incompatível",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "46 ANOS, 9 MESES",
+   "cbo": "S/N",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000010-0",
+   "linha": 1,
+   "codigo": "0310010039",
+   "alertas": "Idade incompatível",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "66 ANOS, 6 MESES",
+   "cbo": "SIM",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000011-1",
+   "linha": 1,
+   "codigo": "0303140151",
+   "alertas": "",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "68 ANOS, 3 MESES",
+   "cbo": "SIM",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000012-2",
+   "linha": 1,
+   "codigo": "0303140151",
+   "alertas": "",
+   "diarias_maior": 0,
+   "reinternou": "SIM",
+   "reinternou72": "SIM",
+   "idade": "68 ANOS, 3 MESES",
+   "cbo": "SIM",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000013-3",
+   "linha": 1,
+   "codigo": "0303010037",
+   "alertas": "",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "60 ANOS, 1 MESES",
+   "cbo": "SIM",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000013-3",
+   "linha": 2,
+   "codigo": "0202010473",
+   "alertas": "",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "60 ANOS, 1 MESES",
+   "cbo": "S/N",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000013-3",
+   "linha": 3,
+   "codigo": "0202010317",
+   "alertas": "",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "60 ANOS, 1 MESES",
+   "cbo": "S/N",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000013-3",
+   "linha": 4,
+   "codigo": "0202010600",
+   "alertas": "",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "60 ANOS, 1 MESES",
+   "cbo": "S/N",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000013-3",
+   "linha": 5,
+   "codigo": "0202010503",
+   "alertas": "",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "60 ANOS, 1 MESES",
+   "cbo": "S/N",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000013-3",
+   "linha": 6,
+   "codigo": "0202010295",
+   "alertas": "",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "60 ANOS, 1 MESES",
+   "cbo": "S/N",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000013-3",
+   "linha": 7,
+   "codigo": "0202010279",
+   "alertas": "",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "60 ANOS, 1 MESES",
+   "cbo": "S/N",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000013-3",
+   "linha": 8,
+   "codigo": "0202010287",
+   "alertas": "",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "60 ANOS, 1 MESES",
+   "cbo": "S/N",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000013-3",
+   "linha": 9,
+   "codigo": "0202010538",
+   "alertas": "",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "60 ANOS, 1 MESES",
+   "cbo": "S/N",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000013-3",
+   "linha": 10,
+   "codigo": "0202020380",
+   "alertas": "",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "60 ANOS, 1 MESES",
+   "cbo": "S/N",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000013-3",
+   "linha": 11,
+   "codigo": "0202020380",
+   "alertas": "",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "60 ANOS, 1 MESES",
+   "cbo": "S/N",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000014-4",
+   "linha": 1,
+   "codigo": "0408050896",
+   "alertas": "",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "32 ANOS, 11 MESES",
+   "cbo": "SIM",
+   "profissional": "SIM"
+  },
+  {
+   "aih": "312600000014-4",
+   "linha": 2,
+   "codigo": "0408050896",
+   "alertas": "",
+   "diarias_maior": 0,
+   "reinternou": "NAO",
+   "reinternou72": "NAO",
+   "idade": "32 ANOS, 11 MESES",
+   "cbo": "SIM",
+   "profissional": "SIM"
+  }
+ ],
+ "detalhes": [
+  "7",
+  "O procedimento exige habilitação que a unidade não possui.",
+  "Serviço/classificação exigido pelo SIGTAP não foi apresentado. Apresentado na AIH: vazio.",
+  "O serviço/classificação exigido pelo procedimento não está cadastrado na planilha da unidade.",
+  "O serviço exigido é executado por terceiro. A AIH apresentou o CNES/CNPJ 0026921, mas a unidade só tem cadastrado: 7777777.",
+  "Total de tomografias 0206010079 na AIH (5) acima do limite de 3 por AIH (HJXXIII/HIJPII).",
+  "Total de tomografias 0206010079 na AIH (5) acima do limite de 3 por AIH (HJXXIII/HIJPII).",
+  "CBO 223505 não consta na lista de CBOs nem na Categoria CBO do SIGTAP.",
+  "O SIGTAP exige CBO e o espelho da AIH não trouxe nenhum.",
+  "O documento 700019990000004 com CBO 225125 não foi encontrado na planilha auxiliar.",
+  "Sexo Feminino incompatível com a regra do SIGTAP.",
+  "Idade 66 ANOS, 6 MESES fora da faixa etária do SIGTAP."
+ ],
+ "contagens": [
+  [
+   "Admite permanência à maior",
+   1,
+   1
+  ],
+  [
+   "Sem habilitação",
+   1,
+   1
+  ],
+  [
+   "Serviço não apresentado",
+   1,
+   1
+  ],
+  [
+   "Estabelecimento não possui serviço/classificação exigido para o procedimento",
+   1,
+   2
+  ],
+  [
+   "Quantidade acima da máxima",
+   1,
+   2
+  ],
+  [
+   "CBO incompatível",
+   1,
+   1
+  ],
+  [
+   "CBO não informado",
+   1,
+   1
+  ],
+  [
+   "Profissional/CBO não cadastrado",
+   1,
+   1
+  ],
+  [
+   "Sexo incompatível",
+   1,
+   1
+  ],
+  [
+   "Idade incompatível",
+   1,
+   1
+  ]
+ ],
+ "cti": [
+  [
+   "AIH: cirúrgica sem CTI",
+   1
+  ],
+  [
+   "AIH: clínica sem CTI",
+   12
+  ],
+  [
+   "AIHs com CTI na cirúrgica",
+   0
+  ],
+  [
+   "AIHs com CTI na clínica",
+   1
+  ]
+ ]
+}

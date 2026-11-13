@@ -1,0 +1,22 @@
+﻿Gabarito - Fatura Fhemig Ambulatorial (BPA_HRBJA_202610_TESTE.txt)
+Caso;Tipo;Procedimento;Alertas esperados
+A01;BPA-C;0301100039;Nenhum alerta
+A02;BPA-C;0101050186;R08 (exige habilitação 0638/0639/0640) e R10 (exige 115-011)
+A03;BPA-C;0101050194;R10 - Unidade sem o serviço/classificação 115-011
+A04;BPA-C;0399999999;R02 - Procedimento inexistente no SIGTAP
+A05;BPA-I;0301010072;Nenhum alerta
+A06;BPA-I;0301010072;Nenhum alerta (CBO alfanumérico 2231F9)
+A07;BPA-I;0301010072;R11 - CPF obrigatório (atributo 058) não informado
+A08;BPA-I;0301010072;R11 - CPF obrigatório com dígito verificador inválido
+A09;BPA-I;0301010072;R04 - CNS do profissional não cadastrado (e R06)
+A10;BPA-I;0301010072;R05 - CBO 225124 não vinculado ao profissional (e R06)
+A11;BPA-I;0301010072;R06 - Carga horária ambulatorial zerada
+A12;BPA-I;0301010072;R06 - Profissional sem linha na planilha de Carga horária
+A13;BPA-I;0202030024;R08 - Habilitação 1102 fora da vigência (encerrada em 06/2026)
+A14;BPA-I;0211020036;R10 - Serviço só de terceiro com CNES diferente
+A15;BPA-I;0202010473;R10 - Serviço/classificação informado incompatível (145-002 em vez de 145-001)
+A16;BPA-I;0202010473;Nenhum alerta (exame com serviço próprio 145-001)
+A17;BPA-I;0301010072;R01 - Linha inválida (BPA-I truncada)
+A18;?;-;"R01 - Linha inválida (tipo de registro desconhecido ""04"")"
+
+O arquivo _CABECALHO_INCONSISTENTE traz as mesmas linhas validas (A01-A16) com cabecalho errado: deve gerar avisos de quantidade de linhas, de folhas e de campo de controle.

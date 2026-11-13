@@ -1,0 +1,21 @@
+{
+  "_descricao": "Tipos de alerta, na ordem em que aparecem no relatorio. 'rotulo' e o texto mostrado ao faturista (coluna 'Tipo de alerta'). Alerta automatizado nao e glosa definitiva: indica linha que precisa de conferencia.",
+  "alertas": [
+    {"codigo": "R01-LINHA_INVALIDA", "rotulo": "Linha inválida no TXT", "descricao": "Linha com tipo de registro desconhecido, truncada ou com campo obrigatório ilegível."},
+    {"codigo": "R02-PROC_INEXISTENTE", "rotulo": "Procedimento inexistente no SIGTAP", "descricao": "O código do procedimento não existe na tabela SIGTAP usada. As demais regras do SIGTAP não são aplicadas à linha."},
+    {"codigo": "R04-CNS_NAO_CADASTRADO", "rotulo": "Profissional (CNS) não cadastrado", "descricao": "O CNS do profissional não está na planilha de Profissionais da unidade."},
+    {"codigo": "R05-CBO_NAO_VINCULADO", "rotulo": "CBO não vinculado ao profissional", "descricao": "O profissional está cadastrado, mas não com o CBO informado na linha."},
+    {"codigo": "R06-SEM_CH_AMBULATORIAL", "rotulo": "Sem carga horária ambulatorial", "descricao": "Não há carga horária ambulatorial maior que zero para o par CNS e CBO."},
+    {"codigo": "R08-SEM_HABILITACAO", "rotulo": "Unidade sem a habilitação exigida", "descricao": "O procedimento exige habilitação e a unidade não possui nenhuma das exigidas, vigente na competência."},
+    {"codigo": "R10-SEM_SERVICO_CLASSIF", "rotulo": "Unidade sem o serviço/classificação exigido", "descricao": "O procedimento exige serviço/classificação e a unidade não possui nenhum dos exigidos."},
+    {"codigo": "R10-TERCEIRO_CNES_DIFERENTE", "rotulo": "Serviço só de terceiro com CNES diferente", "descricao": "O serviço exigido só é executado por terceiro e o CNES cadastrado difere do CNES da linha."},
+    {"codigo": "R10-SERV_CLASSIF_INCOMPATIVEL", "rotulo": "Serviço/classificação informado incompatível", "descricao": "O serviço/classificação informado na linha BPA-I não está entre os exigidos pelo procedimento."},
+    {"codigo": "R11-CPF_OBRIGATORIO", "rotulo": "CPF obrigatório ausente ou inválido", "descricao": "Procedimento com atributo 058 (CPF obrigatório) e CPF do paciente vazio, zerado ou com dígito verificador inválido."}
+  ],
+  "opcoes": {
+    "r11_ativa": true,
+    "atributos_cpf_obrigatorio": ["058"],
+    "habilitacao_por_grupo": "exige_todas_do_grupo",
+    "sigtap_preferir_mesma_competencia": true
+  }
+}

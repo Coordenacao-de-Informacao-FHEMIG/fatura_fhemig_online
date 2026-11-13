@@ -1,0 +1,26 @@
+﻿Gabarito - ChecaProfissionais (Tasy x CNES HIJPII)
+Caso;Cenario;Resultado esperado
+C01;Profissional igual nas duas fontes (pediatra assistencial);"Sem divergência; entra em CBO_Assistencial"
+C02;Dois CBOs iguais nas duas fontes, um alfanumérico (2231F9);"Sem divergência; informativo de vários CBOs válidos"
+C03;Profissional só no Tasy;Profissional não encontrado no CNES (D002)
+C04;Profissional só no CNES;Profissional não encontrado no Tasy (D006)
+C05;CBO a mais no Tasy;CBO não cadastrado no CNES (D004) para 225150 + CBO diferente (D007) + Vários CBOs (I003)
+C06;CBO a mais no CNES;CBO não cadastrado no Tasy (D005) para 223510 + CBO diferente (D007)
+C07;Mesmo número de CBOs, códigos diferentes;CBO diferente no Tasy e CNES (D007) + D004 (322205) + D005 (515105)
+C08;CNS diferente entre Tasy e CNES (mesmo CPF);CNS diferente no Tasy e CNES (D003)
+C09;CPF com dígito verificador inválido no Tasy;CPF inválido (Q001), cruzamento pelo CNS
+C10;CPF ausente no Tasy, cruza pelo CNS;CPF ausente (Q003)
+C11;Sem CPF e sem CNS no Tasy;Trilha SEM_IDENTIFICADOR (Registros_Especiais) + Elegibilidade em revisão (I004)
+C12;Registros técnicos (TESTE, PAINEL, TOTEM);Registros_Especiais (I002), fora da comparação
+C13;Profissional da ADC presente no Tasy e no CNES da unidade;Retirado nas duas fontes (I001 / Exclusoes_ADC)
+C14;Tasy sem CBO (elegibilidade em revisão);"Sem CBO no Tasy (Q005); NÃO gera Profissional não encontrado no CNES (D002)"
+C15;Mesmo CNS em duas pessoas com CPFs diferentes;Mesmo CNS em CPFs diferentes (D001) + D002 para NADIA (só no Tasy)
+C16;Linha repetida no Tasy;Linha repetida (Q007)
+C17;Mesmo CPF em dois cadastros do Tasy (Cd pessoa diferente);Mesmo CPF em mais de um cadastro do Tasy (Q011)
+C18;Dois CNS para o mesmo CPF no Tasy;Mais de um CNS para o mesmo CPF (Q009) + D004 (322205) + D007 + I003
+C19;Nome diferente para o mesmo CPF;Nome diferente para o mesmo CPF (Q006)
+C20;CBO inválido no Tasy;CBO inválido (Q010) + Sem CBO no Tasy (Q005) + D005 (225125)
+C21;Mesmo CBO repetido com especialidade diferente;Mesmo CBO com dados diferentes (Q008)
+C22;Funcionário? = N continua na comparação;Sem divergência (Funcionário = N não exclui)
+
+"O arquivo CNES ... HAC - UNIDADE ERRADA deve interromper o processamento com ""Tasy e CNES de unidades diferentes"" (E002)."

@@ -1,0 +1,39 @@
+{
+  "name": "fatura-fhemig-online",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Fatura Fhemig Online: Fatura Hospitalar, Fatura Ambulatorial e ChecaProfissionais em uma unica aplicacao web com processamento local no navegador.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:vm": "node scripts/dev.mjs vm",
+    "build": "node scripts/build.mjs netlify",
+    "build:vm": "node scripts/build.mjs vm",
+    "preview": "vite preview",
+    "sigtap": "node scripts/build-sigtap.mjs",
+    "test": "vitest run",
+    "api": "node --disable-warning=ExperimentalWarning servidor/index.mjs",
+    "api:dev": "node --disable-warning=ExperimentalWarning servidor/index.mjs --dev",
+    "api:cli": "node --disable-warning=ExperimentalWarning servidor/cli.mjs",
+    "api:demo": "node --disable-warning=ExperimentalWarning servidor/cli.mjs demo"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.1.5",
+    "@fontsource-variable/google-sans-flex": "^5.3.2",
+    "@fontsource-variable/open-sans": "^5.3.0",
+    "chart.js": "^4.6.1",
+    "exceljs": "^4.4.0",
+    "fastify": "^5.12.8",
+    "fflate": "^0.8.3",
+    "pdfjs-dist": "^6.5.438"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.5",
+    "tailwindcss": "^4.3.5",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0"
+  },
+  "engines": {
+    "node": ">=22.13"
+  }
+}

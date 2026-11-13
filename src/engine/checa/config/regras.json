@@ -1,0 +1,85 @@
+{
+  "_descricao": "Regras parametrizáveis do ChecaProfissionais (RN-24). Alterar este arquivo muda o resultado: registre a nova 'versao' e o motivo. A versão e o hash deste arquivo vão para o log de cada execução.",
+  "versao": "2026-11-03",
+
+  "assinaturas": {
+    "_descricao": "Colunas reconhecidas em cada fonte (cabeçalho comparado sem acento, maiúsculo e sem '?'). A aba e a linha do cabeçalho são achadas pela presença das colunas obrigatórias.",
+    "TASY": {
+      "obrigatorias": {
+        "nome": ["NOME PESSOA FISICA"],
+        "cpf": ["NR CPF", "CPF"],
+        "cns": ["CNS"],
+        "cbo": ["CBO"],
+        "cd_estabelecimento": ["CD ESTABELECIMENTO"],
+        "estabelecimento": ["ESTABELCIMENTO", "ESTABELECIMENTO"]
+      },
+      "complementares": {
+        "cd_pessoa": ["CD PESSOA FISICA"],
+        "especialidade": ["ESPECIALIDADE"],
+        "vinculo": ["VINCULO"],
+        "funcionario": ["FUNCIONARIO"],
+        "rg": ["RG", "NR RG", "NR IDENTIDADE", "IDENTIDADE", "CARTEIRA IDENTIDADE"]
+      }
+    },
+    "CNES": {
+      "obrigatorias": {
+        "cpf": ["CPF"],
+        "cns": ["CNS"],
+        "nome": ["NOME"],
+        "cbo": ["CBO"]
+      },
+      "complementares": {
+        "descricao_cbo": ["DESCRICAO CBO"],
+        "rg": ["RG", "NR RG", "NR IDENTIDADE", "IDENTIDADE", "CARTEIRA IDENTIDADE"]
+      }
+    },
+    "CBO_ASSIST": {
+      "obrigatorias": {
+        "cbo": ["CBO"],
+        "assistencial": ["FHEMIG ASSISTENCIAL", "ASSISTENCIAL"]
+      },
+      "complementares": {
+        "descricao_cbo": ["DESCRICAO", "DESCRICAO CBO"]
+      }
+    }
+  },
+
+  "cbo_assistencial": {
+    "_descricao": "Planilha de CBOs do faturamento (colunas CBO, DESCRICAO e FHEMIG ASSISTENCIAL). Um CBO é assistencial quando a coluna 'FHEMIG ASSISTENCIAL' tem um destes valores.",
+    "valores_sim": ["SIM", "S", "X", "1", "VERDADEIRO", "TRUE"]
+  },
+
+  "rg": {
+    "_descricao": "RG é usado só quando Tasy e CNES trazem uma coluna de RG (hoje nenhuma das exportações traz). Ordem das chaves de cruzamento e de retirada da ADC: CPF, depois RG, depois CNS. RG com menos de 'minimo_digitos' caracteres é ignorado.",
+    "minimo_digitos": 5
+  },
+
+  "valores_nulos": ["", "-", "--", "NULL", "NAN", "NONE", "N/A", "NA", "#N/D", "#N/A"],
+
+  "cpf_sentinela": ["00000000000", "11111111111", "99999999999"],
+  "_cns_sentinela": "Lista formal de CNS triviais ainda pendente (levantamento 14.2). Só valores listados aqui são ignorados na comparação de CNS.",
+  "cns_sentinela": [],
+
+  "registros_especiais": {
+    "_descricao": "Nome que contenha uma destas palavras inteiras é cadastro técnico ou de teste: fica fora da comparação e vai para Registros_Especiais.",
+    "termos_nome": ["TESTE", "PAINEL", "TOTEM"]
+  },
+
+  "elegibilidade": {
+    "_descricao": "Pessoa do Tasy é ELEGÍVEL se tiver CPF ou CNS e pelo menos um CBO válido. Sem CBO fica em REVISÃO: não gera 'Profissional não encontrado no CNES' (RN-13), mas aparece em Ausentes para conferência.",
+    "exigir_cbo": true
+  },
+
+  "adc": {
+    "_descricao": "A ADC é retirada do Tasy e também do CNES da unidade, para que o profissional da ADC não apareça como 'não encontrado no Tasy'.",
+    "excluir_tambem_no_cnes": true
+  },
+
+  "atributos_comparados": {
+    "_descricao": "Mesma pessoa e mesmo CBO repetidos com estes campos diferentes geram ATRIBUTOS_DIVERGENTES.",
+    "TASY": ["especialidade", "vinculo", "funcionario"],
+    "CNES": ["descricao_cbo"]
+  },
+
+  "retencao_logs_dias": 7
+}
