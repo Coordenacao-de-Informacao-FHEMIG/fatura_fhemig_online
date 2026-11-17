@@ -1,9 +1,11 @@
 // Cliente da API da Área do gestor (mesmo domínio: /api). Sem API (Netlify), o site usa o protótipo.
 
 class ErroApi extends Error {
-  constructor(status, mensagem) {
+  /** codigo: vem da API em erros que a tela trata (ex.: 'trocar_senha'). */
+  constructor(status, mensagem, codigo = null) {
     super(mensagem);
     this.status = status;
+    this.codigo = codigo;
   }
 }
 
@@ -21,7 +23,7 @@ async function requisitar(metodo, caminho, corpo) {
     throw new ErroApi(0, 'Não foi possível falar com o servidor da FHEMIG.');
   }
   const json = (r.headers.get('content-type') || '').includes('application/json') ? await r.json().catch(() => ({})) : {};
-  if (!r.ok) throw new ErroApi(r.status, json.erro || `Erro ${r.status} no servidor.`);
+  if (!r.ok) throw new ErroApi(r.status, json.erro || `Erro ${r.status} no servidor.`, json.codigo || null);
   return json;
 }
 
@@ -43,6 +45,19 @@ export const api = {
   sair: () => requisitar('DELETE', '/sessao'),
   painel: (ate) => requisitar('GET', `/painel${ate ? `?ate=${encodeURIComponent(ate)}` : ''}`),
   enviar: (resumo) => requisitar('POST', '/processamentos', resumo),
+  trocarSenha: (senhaAtual, senhaNova) => requisitar('POST', '/sessao/senha', { senha_atual: senhaAtual, senha_nova: senhaNova }),
+  historico: ({ sigla, ferramenta } = {}) => {
+    const p = new URLSearchParams();
+    if (sigla) p.set('sigla', sigla);
+    if (ferramenta) p.set('ferramenta', ferramenta);
+    const q = p.toString();
+    return requisitar('GET', `/historico${q ? `?${q}` : ''}`);
+  },
+  // Administração (só perfil admin; a API recusa os demais).
+  usuarios: () => requisitar('GET', '/usuarios'),
+  criarUsuario: (dados) => requisitar('POST', '/usuarios', dados),
+  alterarUsuario: (id, dados) => requisitar('PATCH', `/usuarios/${encodeURIComponent(id)}`, dados),
+  senhaTemporaria: (id) => requisitar('POST', `/usuarios/${encodeURIComponent(id)}/senha-temporaria`),
 };
 
 /** SHA-256 (hex) de um ou mais arquivos; com vários, o hash dos hashes. */

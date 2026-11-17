@@ -171,6 +171,7 @@ No bloco `server` do nginx da seção 2, encaminhe `/api`. A API só escuta em 1
 | `FATURA_DB` | `dados-api/fatura.db` | arquivo do banco |
 | `FATURA_HOST` / `FATURA_PORTA` | `127.0.0.1` / `3001` | onde a API escuta |
 | `FATURA_HORAS_SESSAO` | `8` | validade do login |
+| `FATURA_SENHA_TEMP_HORAS` | `72` | validade da senha temporária gerada pelo admin |
 | `FATURA_CONFIAR_PROXY` | desligado | `1` atrás do nginx, para registrar o IP real na auditoria |
 | `FATURA_ORIGENS` | mesmo host | lista de origens aceitas em escrita, se o site tiver mais de um endereço |
 | `FATURA_COOKIE_SEGURO` | ligado | `0` só para testes em http://localhost |
@@ -178,11 +179,23 @@ No bloco `server` do nginx da seção 2, encaminhe `/api`. A API só escuta em 1
 
 ### Usuários
 
+**1. Primeiro administrador**, uma vez só, pela linha de comando na VM:
+
 ```bash
-cd /opt/fatura-fhemig && sudo -u fatura FATURA_DB=/var/lib/fatura-fhemig/fatura.db npm run api:cli -- usuario:criar --email nome@fhemig.mg.gov.br --nome "Nome Sobrenome" --perfil gestor_unidade --unidades HJXXIII
+cd /opt/fatura-fhemig && sudo -u fatura FATURA_DB=/var/lib/fatura-fhemig/fatura.db npm run api:cli -- usuario:criar --email nome@fhemig.mg.gov.br --nome "Nome Sobrenome" --perfil admin
 ```
 
-A senha é pedida no terminal (mínimo de 10 caracteres, com letras e números). Outros comandos: `usuario:senha`, `usuario:desativar`, `usuario:ativar`, `usuario:listar` e `auditoria`.
+A senha é pedida no terminal (mínimo de 10 caracteres, com letras e números).
+
+**2. Demais usuários**, pela tela: o admin entra na Área do gestor e abre a aba **Usuários**.
+- **Novo usuário:** e-mail, nome, perfil e unidades. O sistema gera uma **senha temporária**, mostrada uma única vez, para o admin repassar por canal interno. No primeiro acesso, a pessoa é obrigada a definir uma senha própria; até lá, a API recusa todo o resto.
+- **Editar:** muda nome, perfil, unidades ou bloqueia o acesso. Vale na hora, inclusive para quem já está logado.
+- **Esqueceu a senha:** botão **Senha temporária**. A senha antiga deixa de valer e as sessões abertas são encerradas.
+- **Proteções:** o admin não desativa nem rebaixa a própria conta, e o sistema sempre mantém um admin ativo.
+
+Cada usuário troca a própria senha pelo botão **Trocar senha**.
+
+**Pela linha de comando (reserva):** `usuario:senha --email … --temporaria` gera uma senha temporária (útil se o único admin perder o acesso). Outros comandos: `usuario:senha`, `usuario:desativar`, `usuario:ativar`, `usuario:listar` e `auditoria`.
 
 **Nunca** rode `npm run api:demo` na VM. Ele cria o usuário de teste `teste@gmail.com` / `teste` e dados fictícios; existe só para testes locais e se recusa a rodar com `NODE_ENV=production` ou num banco que já tenha envios reais.
 
@@ -192,19 +205,55 @@ A senha é pedida no terminal (mínimo de 10 caracteres, com letras e números).
 - **Sessão:** token aleatório num cookie `HttpOnly`, `Secure`, `SameSite=Strict`, restrito a `/api`. O banco guarda só o hash do token.
 - **Login:** bloqueado por 15 minutos após 5 tentativas erradas do mesmo IP e e-mail.
 - **Escrita:** só é aceita vinda do próprio site (conferência do cabeçalho `Origin`).
-- **Auditoria:** login, falhas de login, envios e consultas ao painel ficam registrados na tabela `auditoria`.
+- **Senha temporária:** vale 72 horas (`FATURA_SENHA_TEMP_HORAS`) e obriga a troca no primeiro acesso.
+- **Auditoria:** login, falhas de login, trocas e redefinições de senha, mudanças de usuário, envios e consultas ao painel e ao histórico ficam registrados na tabela `auditoria`.
 - **Fora do ar:** sem a API, o build da VM avisa que o painel está indisponível. Ele nunca mostra o protótipo.
-- **Login institucional:** quando a TI definir AD/LDAP ou SSO, a troca é na rota `POST /api/sessao` (`servidor/app.mjs`). As permissões continuam iguais.
+- **Login institucional (Microsoft, AD):** ainda não implementado. Quando a TI liberar, a troca é na rota `POST /api/sessao` (`servidor/app.mjs`). Perfis e unidades continuam no banco local.
 
 ### Backup
 
-O SQLite permite copiar o banco em uso:
+O SQLite permite copiar o banco em uso. Instale o `sqlite3` (`sudo apt install sqlite3` ou `sudo dnf install sqlite`) e crie a pasta `sudo mkdir -p /var/backups/fatura && sudo chown fatura: /var/backups/fatura`.
+
+Script `/usr/local/bin/fatura-backup` (mantém 30 cópias):
 
 ```bash
+#!/bin/sh
+set -e
 sqlite3 /var/lib/fatura-fhemig/fatura.db ".backup '/var/backups/fatura/fatura-$(date +%F).db'"
+ls -1t /var/backups/fatura/fatura-*.db | tail -n +31 | xargs -r rm --
 ```
 
-Agende o comando diariamente (cron ou Agendador de Tarefas), mantenha 30 cópias e leve uma cópia para fora da VM.
+Agendamento diário com systemd (`/etc/systemd/system/fatura-backup.service` e `.timer`):
+
+```ini
+# fatura-backup.service
+[Unit]
+Description=Backup do banco do Fatura Fhemig Online
+
+[Service]
+Type=oneshot
+User=fatura
+ExecStart=/usr/local/bin/fatura-backup
+```
+
+```ini
+# fatura-backup.timer
+[Unit]
+Description=Backup diário do Fatura Fhemig Online
+
+[Timer]
+OnCalendar=*-*-* 02:30
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+```bash
+sudo chmod 755 /usr/local/bin/fatura-backup && sudo systemctl daemon-reload && sudo systemctl enable --now fatura-backup.timer
+```
+
+Leve também uma cópia para fora da VM (storage institucional). No Windows Server, use o Agendador de Tarefas com o mesmo comando `sqlite3`.
 
 ### Atualização
 

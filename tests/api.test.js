@@ -32,6 +32,7 @@ beforeEach(async () => {
   banco.criarUsuario({ email: 'central@teste.gov', nome: 'Central', perfil: 'gestor_central', senhaHash: hash });
   banco.criarUsuario({ email: 'hj@teste.gov', nome: 'Gestor HJ', perfil: 'gestor_unidade', unidades: ['HJXXIII'], senhaHash: hash });
   banco.criarUsuario({ email: 'fat@teste.gov', nome: 'Faturista', perfil: 'faturista', unidades: ['HIJPII'], senhaHash: hash });
+  banco.criarUsuario({ email: 'admin@teste.gov', nome: 'Admin', perfil: 'admin', senhaHash: hash });
   app = construirApp({ banco, config: { cookieSeguro: true } });
   await app.ready();
 });
@@ -166,6 +167,165 @@ describe('painel', () => {
     const { cookie } = await login('central@teste.gov');
     expect((await app.inject({ url: '/api/painel?ate=2026-10', headers: { cookie } })).statusCode).toBe(400);
     expect((await app.inject({ url: '/api/painel?x=1', headers: { cookie } })).statusCode).toBe(400);
+  });
+});
+
+const entrar = (email, senha) => app.inject({ method: 'POST', url: '/api/sessao', payload: { email, senha } });
+const cookieDe = (r) => `fatura_sessao=${r.cookies.find((x) => x.name === 'fatura_sessao').value}`;
+const pedir = (cookie, method, url, payload) => app.inject({ method, url, headers: { cookie }, ...(payload ? { payload } : {}) });
+
+describe('troca de senha', () => {
+  it('confere a senha atual, exige senha forte e encerra as outras sessões', async () => {
+    const outra = await login('hj@teste.gov');
+    const { cookie } = await login('hj@teste.gov');
+    expect((await pedir(cookie, 'POST', '/api/sessao/senha', { senha_atual: 'errada', senha_nova: 'novaSenha2026' })).statusCode).toBe(400);
+    expect((await pedir(cookie, 'POST', '/api/sessao/senha', { senha_atual: SENHA, senha_nova: 'curta1' })).statusCode).toBe(400);
+    expect((await pedir(cookie, 'POST', '/api/sessao/senha', { senha_atual: SENHA, senha_nova: SENHA })).statusCode).toBe(400);
+    const ok = await pedir(cookie, 'POST', '/api/sessao/senha', { senha_atual: SENHA, senha_nova: 'novaSenha2026' });
+    expect(ok.statusCode).toBe(200);
+    expect((await pedir(cookie, 'GET', '/api/sessao')).statusCode).toBe(200);
+    expect((await pedir(outra.cookie, 'GET', '/api/sessao')).statusCode).toBe(401);
+    expect((await entrar('hj@teste.gov', SENHA)).statusCode).toBe(401);
+    expect((await entrar('hj@teste.gov', 'novaSenha2026')).statusCode).toBe(200);
+    expect(banco.ultimasAuditorias().some((a) => a.acao === 'senha_trocada')).toBe(true);
+  });
+
+  it('exige login', async () => {
+    const r = await app.inject({ method: 'POST', url: '/api/sessao/senha', payload: { senha_atual: SENHA, senha_nova: 'novaSenha2026' } });
+    expect(r.statusCode).toBe(401);
+  });
+});
+
+describe('senha temporária', () => {
+  async function criarComTemporaria(extra = {}) {
+    const { cookie } = await login('admin@teste.gov');
+    const r = await pedir(cookie, 'POST', '/api/usuarios', { email: 'Nova@Teste.gov', nome: 'Nova Gestora', perfil: 'gestor_unidade', unidades: ['HIJPII'], ...extra });
+    expect(r.statusCode).toBe(201);
+    return r.json();
+  }
+
+  it('bloqueia tudo até a troca e libera depois', async () => {
+    const criado = await criarComTemporaria();
+    expect(criado.senha_temporaria).toMatch(/^[a-zA-Z2-9]{4}-[a-zA-Z2-9]{4}-[a-zA-Z2-9]{4}$/);
+    expect(criado.usuario).toMatchObject({ email: 'nova@teste.gov', trocar_senha: true, unidades: ['HIJPII'] });
+    const r = await entrar('nova@teste.gov', criado.senha_temporaria);
+    expect(r.statusCode).toBe(200);
+    expect(r.json().usuario.trocar_senha).toBe(true);
+    const cookie = cookieDe(r);
+    const bloqueado = await pedir(cookie, 'GET', '/api/painel');
+    expect(bloqueado.statusCode).toBe(403);
+    expect(bloqueado.json().codigo).toBe('trocar_senha');
+    expect((await pedir(cookie, 'POST', '/api/processamentos', resumo({ sigla: 'HIJPII' }))).json().codigo).toBe('trocar_senha');
+    expect((await pedir(cookie, 'GET', '/api/sessao')).json().usuario.trocar_senha).toBe(true);
+    const troca = await pedir(cookie, 'POST', '/api/sessao/senha', { senha_atual: criado.senha_temporaria, senha_nova: 'minhaSenha2026' });
+    expect(troca.statusCode).toBe(200);
+    expect(troca.json().usuario.trocar_senha).toBe(false);
+    expect((await pedir(cookie, 'GET', '/api/painel')).statusCode).toBe(200);
+  });
+
+  it('senha temporária vencida não entra', async () => {
+    const criado = await criarComTemporaria();
+    banco.db.prepare("UPDATE usuario SET senha_expira_em = '2000-01-01T00:00:00.000Z' WHERE email = 'nova@teste.gov'").run();
+    const r = await entrar('nova@teste.gov', criado.senha_temporaria);
+    expect(r.statusCode).toBe(401);
+    expect(r.json().erro).toMatch(/venceu/);
+  });
+
+  it('redefinição pelo admin encerra as sessões e invalida a senha antiga', async () => {
+    const hj = await login('hj@teste.gov');
+    const { cookie } = await login('admin@teste.gov');
+    const id = banco.usuarioPorEmail('hj@teste.gov').id;
+    const r = await pedir(cookie, 'POST', `/api/usuarios/${id}/senha-temporaria`);
+    expect(r.statusCode).toBe(200);
+    expect((await pedir(hj.cookie, 'GET', '/api/sessao')).statusCode).toBe(401);
+    expect((await entrar('hj@teste.gov', SENHA)).statusCode).toBe(401);
+    expect((await entrar('hj@teste.gov', r.json().senha_temporaria)).json().usuario.trocar_senha).toBe(true);
+  });
+});
+
+describe('administração de usuários', () => {
+  it('só o admin acessa', async () => {
+    for (const email of ['central@teste.gov', 'hj@teste.gov', 'fat@teste.gov']) {
+      const { cookie } = await login(email);
+      expect((await pedir(cookie, 'GET', '/api/usuarios')).statusCode, email).toBe(403);
+      expect((await pedir(cookie, 'POST', '/api/usuarios', { email: 'x@y.gov', nome: 'X', perfil: 'admin' })).statusCode, email).toBe(403);
+    }
+    const { cookie } = await login('admin@teste.gov');
+    const lista = (await pedir(cookie, 'GET', '/api/usuarios')).json();
+    expect(lista.usuarios).toHaveLength(4);
+    expect(JSON.stringify(lista)).not.toMatch(/scrypt|senha_hash/);
+    expect(lista.unidades.length).toBeGreaterThan(10);
+  });
+
+  it('valida perfil, unidades e e-mail repetido', async () => {
+    const { cookie } = await login('admin@teste.gov');
+    const criar = (dados) => pedir(cookie, 'POST', '/api/usuarios', { email: 'a@b.gov', nome: 'A', perfil: 'gestor_unidade', unidades: ['HJXXIII'], ...dados });
+    expect((await criar({ unidades: [] })).statusCode).toBe(400);
+    expect((await criar({ unidades: ['XYZ'] })).statusCode).toBe(400);
+    expect((await criar({ perfil: 'chefe' })).statusCode).toBe(400);
+    expect((await criar({ email: 'sem-arroba' })).statusCode).toBe(400);
+    expect((await criar({ email: 'HJ@teste.gov' })).statusCode).toBe(409);
+    const central = await criar({ perfil: 'gestor_central' });
+    expect(central.statusCode).toBe(201);
+    expect(central.json().usuario.unidades).toEqual([]);
+  });
+
+  it('mudança de unidades vale na hora para quem já está logado', async () => {
+    for (const r of gerarResumosFicticios()) banco.registrarProcessamento(r, null);
+    const hj = await login('hj@teste.gov');
+    const { cookie } = await login('admin@teste.gov');
+    const id = banco.usuarioPorEmail('hj@teste.gov').id;
+    const r = await pedir(cookie, 'PATCH', `/api/usuarios/${id}`, { unidades: ['HIJPII', 'HJXXIII'] });
+    expect(r.statusCode).toBe(200);
+    expect(r.json().usuario.unidades).toEqual(['HIJPII', 'HJXXIII']);
+    const painel = (await pedir(hj.cookie, 'GET', '/api/painel')).json();
+    expect(Object.keys(painel.dados).sort()).toEqual(['HIJPII', 'HJXXIII']);
+    await pedir(cookie, 'PATCH', `/api/usuarios/${id}`, { ativo: false });
+    expect((await pedir(hj.cookie, 'GET', '/api/painel')).statusCode).toBe(401);
+    expect(banco.ultimasAuditorias().some((a) => a.acao === 'usuario_alterado')).toBe(true);
+  });
+
+  it('admin não se desativa nem se rebaixa; sempre sobra um admin', async () => {
+    const { cookie } = await login('admin@teste.gov');
+    const eu = banco.usuarioPorEmail('admin@teste.gov').id;
+    expect((await pedir(cookie, 'PATCH', `/api/usuarios/${eu}`, { ativo: false })).statusCode).toBe(400);
+    expect((await pedir(cookie, 'PATCH', `/api/usuarios/${eu}`, { perfil: 'gestor_central' })).statusCode).toBe(400);
+    expect((await pedir(cookie, 'POST', `/api/usuarios/${eu}/senha-temporaria`)).statusCode).toBe(400);
+    expect((await pedir(cookie, 'PATCH', `/api/usuarios/${eu}`, { nome: 'Admin Novo' })).statusCode).toBe(200);
+    expect((await pedir(cookie, 'PATCH', '/api/usuarios/9999', { nome: 'X' })).statusCode).toBe(404);
+    expect((await pedir(cookie, 'PATCH', `/api/usuarios/${eu}`, {})).statusCode).toBe(400);
+  });
+});
+
+describe('histórico de envios', () => {
+  beforeEach(() => {
+    for (const r of gerarResumosFicticios()) banco.registrarProcessamento(r, banco.usuarioPorEmail('central@teste.gov').id);
+  });
+
+  it('gestor de unidade vê só a própria; central filtra por unidade e ferramenta', async () => {
+    const hj = await login('hj@teste.gov');
+    const r = (await pedir(hj.cookie, 'GET', '/api/historico')).json();
+    expect(r.envios.length).toBeGreaterThan(0);
+    expect(r.envios.every((e) => e.sigla === 'HJXXIII')).toBe(true);
+    expect((await pedir(hj.cookie, 'GET', '/api/historico?sigla=HIJPII')).statusCode).toBe(403);
+    const central = await login('central@teste.gov');
+    const so = (await pedir(central.cookie, 'GET', '/api/historico?sigla=HIJPII&ferramenta=checa')).json().envios;
+    expect(so.length).toBeGreaterThan(0);
+    expect(so.every((e) => e.sigla === 'HIJPII' && e.ferramenta === 'checa')).toBe(true);
+    expect(so[0]).toMatchObject({ enviado_por: 'Central', vigente: true, indicadores: expect.any(Object) });
+  });
+
+  it('mostra o envio substituído', async () => {
+    const { cookie } = await login('central@teste.gov');
+    await pedir(cookie, 'POST', '/api/processamentos', resumo({ competencia: '202611', arquivo_sha256: 'd'.repeat(64) }));
+    await pedir(cookie, 'POST', '/api/processamentos', resumo({ competencia: '202611', arquivo_sha256: 'e'.repeat(64) }));
+    const envios = (await pedir(cookie, 'GET', '/api/historico?sigla=HJXXIII&ferramenta=hospitalar')).json().envios.filter((e) => e.competencia === '202611');
+    expect(envios.map((e) => e.vigente)).toEqual([true, false]);
+  });
+
+  it('faturista não vê o histórico', async () => {
+    const { cookie } = await login('fat@teste.gov');
+    expect((await pedir(cookie, 'GET', '/api/historico')).statusCode).toBe(403);
   });
 });
 

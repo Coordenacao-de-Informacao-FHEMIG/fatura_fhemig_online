@@ -4,7 +4,7 @@ import { UNIDADES } from './engine/unidades.js';
 import { extrairEspelhoPdf } from './engine/hospitalar/entrada.js';
 import { FERRAMENTAS, porId } from './ui/ferramentas.js';
 import { renderizarResultado } from './ui/resultados.js';
-import { abrirLogin, logado, renderizarPainel } from './ui/gestor.js';
+import { abrirLogin, abrirTrocaSenha, logado, renderizarPainel } from './ui/gestor.js';
 import { api, apiDisponivel, sha256DeArquivos } from './gestao/api.js';
 import { montarResumoGestao } from './gestao/resumo.js';
 import { $, $$, esc, toast, tamanho, armazenamento, competencia, ICONES } from './ui/util.js';
@@ -599,10 +599,11 @@ async function oferecerEnvio(alvo, r, extra) {
       botao.textContent = 'Enviado';
       toast('Resumo enviado ao painel gerencial.', 'ok');
     } catch (e) {
-      if (e.status === 401) {
+      if (e.status === 401 || e.codigo === 'trocar_senha') {
         botao.disabled = false;
         botao.textContent = 'Enviar ao painel gerencial';
-        abrirLogin(enviar, 'Entre para enviar os totais desta análise ao painel gerencial.');
+        if (e.status === 401) abrirLogin(enviar, 'Entre para enviar os totais desta análise ao painel gerencial.');
+        else if (await abrirTrocaSenha({ obrigatoria: true })) enviar();
         return;
       }
       botao.disabled = false;

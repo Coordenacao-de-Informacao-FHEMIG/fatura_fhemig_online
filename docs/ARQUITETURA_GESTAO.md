@@ -18,6 +18,8 @@ Nenhum nome, CPF, CNS ou prontuário sai do navegador. Isso mantém o banco fora
 
 Se um dia a gestão precisar de detalhe por AIH, isso deve ser uma decisão à parte, com DPO, base legal, pseudonimização e controle de acesso por unidade.
 
+**Decisão (nov/2026):** o acompanhamento dos alertas usa só as **contagens** por tipo de alerta, unidade e competência. O número da AIH não vai para o banco; o detalhe por conta continua no relatório Excel que a unidade baixa no próprio navegador.
+
 ## Componentes na VM
 
 ```
@@ -94,17 +96,16 @@ CREATE TABLE auditoria (id INTEGER PRIMARY KEY, usuario_id INTEGER, acao TEXT, d
 
 Os indicadores do painel saem de consultas simples sobre `processamento` com `vigente = 1`, agrupadas por unidade e competência.
 
-## Autenticação (o que substitui o login de teste)
+## Autenticação
 
-Em ordem de preferência:
+**Implementado: usuários locais** na tabela `usuario`, administrados pela aba **Usuários** (perfil `admin`):
 
-1. **Login institucional**, com usuários e senhas que a TI do Estado já administra:
-   - **SSO** com o provedor de identidade do Estado, via OIDC ou SAML, se houver; ou
-   - **Active Directory/LDAP** da FHEMIG, com a API validando a senha no AD.
-2. **Usuários locais** na tabela `usuario`, se nenhuma das opções acima for possível:
-   - senha com **scrypt** (implementado);
-   - bloqueio após tentativas falhas (implementado);
-   - troca de senha no primeiro acesso (pendente).
+- **Senhas:** guardadas com **scrypt**, com bloqueio após tentativas falhas.
+- **Usuário novo ou senha esquecida:** o admin gera uma **senha temporária** (72 h). Até a pessoa definir uma senha própria, a API só aceita a troca de senha (`403` com `codigo: 'trocar_senha'`).
+- **Troca pelo próprio usuário:** `POST /api/sessao/senha`, que encerra as outras sessões dele.
+- **Mudanças de perfil, unidade ou bloqueio:** valem na hora, porque a sessão relê o usuário no banco a cada requisição.
+
+**Próximo passo, quando a TI liberar: login institucional** (conta Microsoft/Entra ID via OIDC, ou AD/LDAP). Só a autenticação muda. Perfil e unidades continuam no banco local, e só entra quem o admin já cadastrou.
 
 Em qualquer caso:
 
@@ -122,6 +123,11 @@ Em qualquer caso:
 | POST | `/api/processamentos` | o navegador envia o resumo ao fim de cada análise |
 | GET | `/api/painel?ate=AAAAMM&meses=6` | totais por unidade e mês para o painel, já filtrados pelo perfil |
 | GET | `/api/unidades` | catálogo, filtrado pelo perfil |
+| POST | `/api/sessao/senha` | o próprio usuário troca a senha |
+| GET | `/api/historico?sigla=&ferramenta=` | envios (vigentes e substituídos), filtrados pelo perfil |
+| GET, POST | `/api/usuarios` | só admin: lista e cria (com senha temporária) |
+| PATCH | `/api/usuarios/:id` | só admin: nome, perfil, unidades, ativo |
+| POST | `/api/usuarios/:id/senha-temporaria` | só admin: redefine a senha |
 
 ## Operação na VM
 

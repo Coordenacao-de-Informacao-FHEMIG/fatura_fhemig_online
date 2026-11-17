@@ -59,6 +59,8 @@ Habilitação e Serviço/Classificação reais estão versionadas: são cadastro
 
 O painel gerencial lê os totais que as unidades enviam ao fim de cada análise (botão **Enviar ao painel gerencial**). Só vão indicadores, tipos de alerta e procedimentos mais realizados, nunca dados de pacientes ou profissionais. A API fica em `servidor/` (Node 22, Fastify e o SQLite embutido do Node) e roda só na VM. No Netlify não há API, e a Área do gestor mostra o protótipo com dados fictícios.
 
+Com a API, a Área do gestor tem três abas: **Painel**, **Histórico de envios** (filtrado pelas unidades do perfil) e **Usuários** (só admin: cadastro, perfil, unidades, bloqueio e senha temporária). Cada usuário troca a própria senha pelo botão **Trocar senha**.
+
 Para testar localmente:
 
 ```bash

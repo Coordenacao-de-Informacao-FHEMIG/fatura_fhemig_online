@@ -5,7 +5,8 @@
 //    guardados no SQLite da VM (servidor/). Ver docs/ARQUITETURA_GESTAO.md.
 //  - Protótipo (Netlify, ou sem API): login de teste e dados FICTÍCIOS gerados no navegador.
 import { desenharGrafico } from './resultados.js';
-import { $, esc, numero, armazenamento, toast } from './util.js';
+import { $, esc, numero, armazenamento, toast, competencia } from './util.js';
+import { PERFIS, renderizarUsuarios, dataHora } from './admin.js';
 import { api, apiDisponivel } from '../gestao/api.js';
 import { gerarResumosFicticios, MESES_FICTICIOS } from '../gestao/ficticio.js';
 import { janelaCompetencias, montarPainel } from '../gestao/painel.js';
@@ -14,7 +15,7 @@ import { UNIDADES } from '../engine/unidades.js';
 // Credenciais apenas para o protótipo (dados fictícios; nada a proteger).
 const USUARIO_TESTE = { email: 'teste@gmail.com', senha: 'teste', nome: 'Gestor de teste' };
 const CHAVE_SESSAO = 'fatura.gestor.sessao';
-const PERFIS = { faturista: 'Faturista', gestor_unidade: 'Gestor de unidade', gestor_central: 'Gestão central', admin: 'Administrador' };
+const NOME_FERRAMENTA = { hospitalar: 'Hospitalar', ambulatorial: 'Ambulatorial', checa: 'ChecaProfissionais' };
 
 const nomeMes = (c) => `${['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'][+c.slice(4) - 1]}/${c.slice(2, 4)}`;
 
@@ -107,14 +108,17 @@ export async function abrirLogin(aoEntrar, motivo = '') {
   </form>`;
   const form = d.querySelector('form');
   const erro = d.querySelector('[data-erro]');
+  d.oncancel = null;
   d.querySelectorAll('[data-fechar]').forEach((b) => b.addEventListener('click', () => d.close()));
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const botao = d.querySelector('[data-entrar]');
     botao.disabled = true;
     try {
-      await (await fonte()).entrar(form.email.value.trim().toLowerCase(), form.senha.value);
+      const r = await (await fonte()).entrar(form.email.value.trim().toLowerCase(), form.senha.value);
       d.close();
+      // Senha temporária: só segue depois de definir a nova.
+      if (r?.usuario?.trocar_senha && !(await abrirTrocaSenha({ obrigatoria: true }))) return;
       aoEntrar();
     } catch (falha) {
       erro.textContent = falha.message;
@@ -126,6 +130,87 @@ export async function abrirLogin(aoEntrar, motivo = '') {
   });
   d.showModal();
   form.email.focus();
+}
+
+// ---------------------------------------------------------------------------
+// Troca de senha (só com a API)
+// ---------------------------------------------------------------------------
+/** Mesma regra de servidor/senha.mjs (a API confere de novo). */
+function problemaNaSenha(senha) {
+  if (senha.length < 10) return 'A senha precisa ter pelo menos 10 caracteres.';
+  if (!/[a-zA-Z]/.test(senha) || !/\d/.test(senha)) return 'A senha precisa ter letras e números.';
+  return null;
+}
+
+/**
+ * Diálogo de troca de senha. Obrigatória (depois de senha temporária): não fecha; a alternativa é sair.
+ * Resolve true quando a senha foi trocada.
+ */
+export function abrirTrocaSenha({ obrigatoria = false } = {}) {
+  const d = $('#dialogo-gestor');
+  d.innerHTML = `<form method="dialog" class="bg-white p-6 sm:p-8" novalidate>
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <h2 class="text-[22px]">${obrigatoria ? 'Defina sua nova senha' : 'Trocar senha'}</h2>
+        <p class="mt-1 text-sm text-suave">${obrigatoria
+          ? 'Você entrou com uma senha temporária. Para continuar, escolha uma senha só sua.'
+          : 'As outras sessões abertas com a sua conta serão encerradas.'}</p>
+      </div>
+      ${obrigatoria ? '' : '<button type="button" class="btn-sutil text-suave" data-fechar aria-label="Fechar">✕</button>'}
+    </div>
+    <div class="mt-6 space-y-4">
+      <label class="block"><span class="rotulo">${obrigatoria ? 'Senha temporária' : 'Senha atual'}</span>
+        <input type="password" class="campo mt-1" name="atual" autocomplete="current-password" required maxlength="200" /></label>
+      <label class="block"><span class="rotulo">Nova senha</span>
+        <input type="password" class="campo mt-1" name="nova" autocomplete="new-password" required maxlength="200" /></label>
+      <label class="block"><span class="rotulo">Repita a nova senha</span>
+        <input type="password" class="campo mt-1" name="repetir" autocomplete="new-password" required maxlength="200" /></label>
+      <p class="text-[13px] text-apagado">Pelo menos 10 caracteres, com letras e números.</p>
+      <p class="hidden text-sm font-semibold text-alerta" data-erro role="alert"></p>
+    </div>
+    <div class="mt-7 flex justify-end gap-2">
+      <button type="button" class="btn-secundario" data-fechar>${obrigatoria ? 'Sair' : 'Cancelar'}</button>
+      <button type="submit" class="btn-primario px-6" data-salvar>Salvar senha</button>
+    </div>
+  </form>`;
+  const form = d.querySelector('form');
+  const erro = d.querySelector('[data-erro]');
+  const mostrarErro = (msg) => {
+    erro.textContent = msg;
+    erro.classList.remove('hidden');
+  };
+  return new Promise((resolver) => {
+    let trocou = false;
+    d.oncancel = obrigatoria ? (e) => e.preventDefault() : null;
+    d.addEventListener('close', () => resolver(trocou), { once: true });
+    d.querySelectorAll('[data-fechar]').forEach((b) => b.addEventListener('click', async () => {
+      if (obrigatoria) {
+        await api.sair().catch(() => {});
+        toast('Sessão encerrada. A senha temporária continua valendo até o prazo.');
+      }
+      d.close();
+    }));
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nova = form.nova.value;
+      const problema = problemaNaSenha(nova) || (nova !== form.repetir.value ? 'As duas senhas novas não conferem.' : null);
+      if (problema) return mostrarErro(problema);
+      const botao = d.querySelector('[data-salvar]');
+      botao.disabled = true;
+      try {
+        await api.trocarSenha(form.atual.value, nova);
+        trocou = true;
+        toast('Senha alterada.', 'ok');
+        d.close();
+      } catch (falha) {
+        mostrarErro(falha.message);
+      } finally {
+        botao.disabled = false;
+      }
+    });
+    d.showModal();
+    form.atual.focus();
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -195,6 +280,35 @@ const vazioHtml = (titulo, texto) => `<div class="cartao px-6 py-12 text-center"
   <p class="display text-[17px] font-bold text-azul">${esc(titulo)}</p>
   <p class="mx-auto mt-2 max-w-xl text-sm text-suave">${esc(texto)}</p></div>`;
 
+/** Resumo de uma linha do histórico, a partir dos indicadores do envio. */
+function resultadoDoEnvio(e) {
+  const i = e.indicadores || {};
+  if (e.ferramenta === 'hospitalar') return `${numero(i.aihs_distintas || 0)} AIHs · ${numero(i.aihs_com_alerta || 0)} com alerta`;
+  if (e.ferramenta === 'ambulatorial') return `${numero(i.linhas_de_atendimento || 0)} linhas · ${numero(i.linhas_com_alerta || 0)} com alerta`;
+  const pend = (i.nao_encontrados_no_cnes || 0) + (i.nao_encontrados_no_tasy || 0) + (i.pessoas_com_cbos_diferentes || 0);
+  return `${numero(pend)} pendências cadastrais`;
+}
+
+function tabelaHistorico(envios) {
+  if (!envios.length) return vazioHtml('Nenhum envio encontrado', 'Ainda não há análises enviadas ao painel para este filtro.');
+  return `<section class="cartao p-6">
+    <h3 class="display mb-1 text-[15px] font-bold">Histórico de envios</h3>
+    <p class="mb-5 text-[13px] text-suave">Cada linha é uma análise enviada ao painel. Quando a unidade reenvia a mesma competência e ferramenta, o envio novo passa a valer e o anterior fica como substituído. Mostra os ${numero(envios.length)} envios mais recentes.</p>
+    <div class="overflow-x-auto rounded-lg border border-linha"><table class="tabela">
+      <thead><tr><th>Enviado em</th><th>Unidade</th><th>Ferramenta</th><th>Competência</th><th>Resultado</th><th class="text-right">Tipos de alerta</th><th>Enviado por</th><th>Situação</th></tr></thead>
+      <tbody>${envios.map((e) => `<tr>
+        <td class="whitespace-nowrap tabular-nums">${esc(dataHora(e.criado_em))}${e.arquivo_nome ? `<span class="block max-w-56 truncate text-xs text-apagado" title="${esc(e.arquivo_nome)}">${esc(e.arquivo_nome)}</span>` : ''}</td>
+        <td class="font-semibold">${esc(e.sigla)}</td>
+        <td>${esc(NOME_FERRAMENTA[e.ferramenta] || e.ferramenta)}</td>
+        <td class="tabular-nums">${esc(competencia(e.competencia))}</td>
+        <td class="text-[13px]">${esc(resultadoDoEnvio(e))}</td>
+        <td class="text-right tabular-nums">${numero(e.tipos_alerta || 0)}</td>
+        <td class="text-[13px]">${esc(e.enviado_por || '—')}</td>
+        <td>${e.vigente ? '<span class="etiqueta etiqueta-ok">Vigente</span>' : '<span class="etiqueta etiqueta-neutra">Substituído</span>'}</td></tr>`).join('')}</tbody>
+    </table></div>
+  </section>`;
+}
+
 export async function renderizarPainel(alvo, aoSair) {
   const f = await fonte();
   const real_ = f === real;
@@ -203,8 +317,33 @@ export async function renderizarPainel(alvo, aoSair) {
     aoSair();
     return;
   }
+  // Sessão aberta com senha temporária (ex.: recarregou a página antes de trocar).
+  if (real_ && usuario.trocar_senha && !(await abrirTrocaSenha({ obrigatoria: true }))) {
+    aoSair();
+    return;
+  }
   let painel = null;
   let unidade = '';
+  let aba = 'painel';
+  let ferramenta = '';
+  const abas = real_
+    ? [['painel', 'Painel'], ['historico', 'Histórico de envios'], ...(usuario.perfil === 'admin' ? [['usuarios', 'Usuários']] : [])]
+    : [];
+
+  /** Erro comum às abas: sessão vencida ou troca de senha pendente. Devolve true se tratou. */
+  const tratarErroSessao = async (e, repetir) => {
+    if (e.status === 401) {
+      toast('Sua sessão expirou. Entre novamente.');
+      aoSair();
+      return true;
+    }
+    if (e.codigo === 'trocar_senha') {
+      if (await abrirTrocaSenha({ obrigatoria: true })) repetir();
+      else aoSair();
+      return true;
+    }
+    return false;
+  };
 
   const desenhar = async () => {
     const conteudo = alvo.querySelector('[data-conteudo]');
@@ -350,14 +489,11 @@ export async function renderizarPainel(alvo, aoSair) {
     try {
       painel = await f.painel(ate);
     } catch (e) {
-      if (e.status === 401) {
-        toast('Sua sessão expirou. Entre novamente.');
-        aoSair();
-        return;
-      }
-      alvo.querySelector('[data-conteudo]').innerHTML = vazioHtml('Não foi possível carregar o painel', e.message);
+      if (await tratarErroSessao(e, () => carregar(ate))) return;
+      if (aba === 'painel') alvo.querySelector('[data-conteudo]').innerHTML = vazioHtml('Não foi possível carregar o painel', e.message);
       return;
     }
+    if (aba !== 'painel') return; // trocou de aba enquanto carregava
     const selMes = alvo.querySelector('[data-filtro-mes]');
     const opcoes = [...new Set([painel.competencias.at(-1), ...(painel.disponiveis || [])])].sort().reverse();
     selMes.innerHTML = opcoes.map((m) => `<option value="${esc(m)}">${esc(nomeMes(m))}</option>`).join('');
@@ -371,9 +507,38 @@ export async function renderizarPainel(alvo, aoSair) {
     await desenhar();
   };
 
+  const carregarHistorico = async () => {
+    const conteudo = alvo.querySelector('[data-conteudo]');
+    conteudo.innerHTML = '<p class="py-12 text-center text-sm text-suave">Carregando o histórico…</p>';
+    try {
+      const { envios } = await api.historico({ sigla: unidade, ferramenta });
+      if (aba === 'historico') conteudo.innerHTML = tabelaHistorico(envios);
+    } catch (e) {
+      if (await tratarErroSessao(e, carregarHistorico)) return;
+      conteudo.innerHTML = vazioHtml('Não foi possível carregar o histórico', e.message);
+    }
+  };
+
+  /** Mostra a aba e os filtros que valem para ela. */
+  const abrirAba = async (nova) => {
+    aba = nova;
+    alvo.querySelectorAll('[data-aba-gestor]').forEach((b) => {
+      const ativa = b.dataset.abaGestor === aba;
+      b.setAttribute('aria-selected', String(ativa));
+      b.tabIndex = ativa ? 0 : -1;
+    });
+    alvo.querySelectorAll('[data-so]').forEach((el) => { el.hidden = !el.dataset.so.split(' ').includes(aba); });
+    if (aba === 'painel') await carregar(alvo.querySelector('[data-filtro-mes]').value || undefined);
+    else if (aba === 'historico') await carregarHistorico();
+    else {
+      const conteudo = alvo.querySelector('[data-conteudo]');
+      await renderizarUsuarios(conteudo, { emailAtual: usuario.email, aoErro: (e) => tratarErroSessao(e, () => abrirAba('usuarios')) });
+    }
+  };
+
   const perfil = PERFIS[usuario.perfil] || usuario.perfil;
   alvo.innerHTML = `
-    <div class="mb-8 flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
+    <div class="mb-6 flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
       <div class="max-w-3xl">
         <div class="mb-2 flex flex-wrap gap-2">${real_
           ? '<span class="etiqueta etiqueta-ok">Dados enviados pelas unidades</span>'
@@ -382,16 +547,28 @@ export async function renderizarPainel(alvo, aoSair) {
         <p class="mt-2 text-suave">Produção e qualidade do faturamento das unidades da FHEMIG, consolidadas a partir das análises do Fatura Hospitalar, do Fatura Ambulatorial e do ChecaProfissionais.</p>
       </div>
       <div class="flex flex-wrap items-end gap-3">
-        <label class="flex flex-col gap-1"><span class="rotulo">Competência</span>
+        <label class="flex flex-col gap-1" data-so="painel"><span class="rotulo">Competência</span>
           <select class="campo w-36" data-filtro-mes></select></label>
-        <label class="flex flex-col gap-1"><span class="rotulo">Unidade</span>
+        <label class="flex flex-col gap-1" data-so="painel historico"><span class="rotulo">Unidade</span>
           <select class="campo w-56" data-filtro-unidade><option value="">Todas as unidades</option></select></label>
+        <label class="flex flex-col gap-1" data-so="historico" hidden><span class="rotulo">Ferramenta</span>
+          <select class="campo w-44" data-filtro-ferramenta><option value="">Todas</option>${Object.entries(NOME_FERRAMENTA).map(([id, nome]) => `<option value="${esc(id)}">${esc(nome)}</option>`).join('')}</select></label>
+        ${real_ ? '<button type="button" class="btn-secundario" data-trocar-senha>Trocar senha</button>' : ''}
         <button type="button" class="btn-secundario" data-sair>Sair</button>
       </div>
     </div>
+    ${abas.length ? `<div class="mb-6 flex gap-6 overflow-x-auto border-b border-linha" role="tablist" aria-label="Seções da Área do gestor">${abas.map(([id, nome]) => `
+      <button type="button" role="tab" class="aba" data-aba-gestor="${esc(id)}" aria-selected="${id === aba}" tabindex="${id === aba ? 0 : -1}">${esc(nome)}</button>`).join('')}</div>` : ''}
     <div class="space-y-6" data-conteudo></div>`;
   alvo.querySelector('[data-filtro-mes]').addEventListener('change', (e) => carregar(e.target.value));
-  alvo.querySelector('[data-filtro-unidade]').addEventListener('change', (e) => { unidade = e.target.value; desenhar(); });
+  alvo.querySelector('[data-filtro-unidade]').addEventListener('change', (e) => {
+    unidade = e.target.value;
+    if (aba === 'historico') carregarHistorico();
+    else desenhar();
+  });
+  alvo.querySelector('[data-filtro-ferramenta]').addEventListener('change', (e) => { ferramenta = e.target.value; carregarHistorico(); });
+  alvo.querySelectorAll('[data-aba-gestor]').forEach((b) => b.addEventListener('click', () => abrirAba(b.dataset.abaGestor)));
+  alvo.querySelector('[data-trocar-senha]')?.addEventListener('click', () => abrirTrocaSenha());
   alvo.querySelector('[data-sair]').addEventListener('click', async () => {
     await f.sair().catch(() => {});
     usuario = null;

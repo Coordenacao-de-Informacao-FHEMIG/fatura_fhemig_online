@@ -59,6 +59,9 @@ function transacao(db, fn) {
 function criarRepositorio(db) {
   const q = (sql) => db.prepare(sql);
   const unidadesDoUsuario = q('SELECT sigla FROM usuario_unidade WHERE usuario_id = ? ORDER BY sigla');
+  const comUnidades = (u) => (u ? { ...u, unidades: unidadesDoUsuario.all(u.id).map((r) => r.sigla) } : null);
+  const COLUNAS_USUARIO = 'id, email, nome, senha_hash, perfil, ativo, trocar_senha, senha_expira_em, ultimo_login_em';
+  const placeholders = (lista) => lista.map(() => '?').join(',');
 
   const repo = {
     db,
@@ -78,14 +81,40 @@ function criarRepositorio(db) {
         return Number(id);
       });
     },
-    atualizarSenha: (id, senhaHash) => q('UPDATE usuario SET senha_hash = ? WHERE id = ?').run(senhaHash, id),
+    /**
+     * Grava a senha. temporaria = true obriga a troca no proximo login e pode ter prazo (expiraEm, Date).
+     * Uma senha definitiva limpa a troca obrigatoria e o prazo.
+     */
+    definirSenha: (id, senhaHash, { temporaria = false, expiraEm = null } = {}) =>
+      q('UPDATE usuario SET senha_hash = ?, trocar_senha = ?, senha_expira_em = ? WHERE id = ?')
+        .run(senhaHash, temporaria ? 1 : 0, temporaria && expiraEm ? expiraEm.toISOString() : null, id),
+    atualizarSenha: (id, senhaHash) => repo.definirSenha(id, senhaHash),
     definirAtivo: (id, ativo) => q('UPDATE usuario SET ativo = ? WHERE id = ?').run(ativo ? 1 : 0, id),
-    usuarioPorEmail(email) {
-      const u = q('SELECT id, email, nome, senha_hash, perfil, ativo FROM usuario WHERE email = ?').get(email);
-      return u ? { ...u, unidades: unidadesDoUsuario.all(u.id).map((r) => r.sigla) } : null;
+    /** Altera so os campos informados; unidades (lista) substitui o conjunto inteiro. */
+    atualizarUsuario(id, { nome, perfil, unidades, ativo } = {}) {
+      return transacao(db, () => {
+        if (nome !== undefined) q('UPDATE usuario SET nome = ? WHERE id = ?').run(nome, id);
+        if (perfil !== undefined) q('UPDATE usuario SET perfil = ? WHERE id = ?').run(perfil, id);
+        if (ativo !== undefined) q('UPDATE usuario SET ativo = ? WHERE id = ?').run(ativo ? 1 : 0, id);
+        if (unidades !== undefined) {
+          q('DELETE FROM usuario_unidade WHERE usuario_id = ?').run(id);
+          const st = q('INSERT INTO usuario_unidade (usuario_id, sigla) VALUES (?, ?)');
+          for (const s of unidades) st.run(id, s);
+        }
+      });
     },
-    listarUsuarios: () => q(`SELECT u.id, u.email, u.nome, u.perfil, u.ativo, group_concat(uu.sigla) AS unidades
-      FROM usuario u LEFT JOIN usuario_unidade uu ON uu.usuario_id = u.id GROUP BY u.id ORDER BY u.email`).all().map((r) => ({ ...r })),
+    registrarLogin: (id) => q('UPDATE usuario SET ultimo_login_em = ? WHERE id = ?').run(agora(), id),
+    contarAdminsAtivos: () => Number(q("SELECT count(*) AS n FROM usuario WHERE perfil = 'admin' AND ativo = 1").get().n),
+    usuarioPorEmail: (email) => comUnidades(q(`SELECT ${COLUNAS_USUARIO} FROM usuario WHERE email = ?`).get(email)),
+    usuarioPorId: (id) => comUnidades(q(`SELECT ${COLUNAS_USUARIO} FROM usuario WHERE id = ?`).get(id)),
+    /** Lista para administracao (sem hash de senha). Com id, devolve so aquele usuario. */
+    listarUsuarios(id = null) {
+      const linhas = q(`SELECT u.id, u.email, u.nome, u.perfil, u.ativo, u.trocar_senha, u.senha_expira_em, u.ultimo_login_em, u.criado_em,
+        group_concat(uu.sigla) AS unidades
+        FROM usuario u LEFT JOIN usuario_unidade uu ON uu.usuario_id = u.id
+        ${id === null ? '' : 'WHERE u.id = ?'} GROUP BY u.id ORDER BY u.email`).all(...(id === null ? [] : [id]));
+      return linhas.map((r) => ({ ...r }));
+    },
 
     // ------------------------------------------------------------------ sessoes
     criarSessao({ token, usuarioId, horas, ip }) {
@@ -95,11 +124,13 @@ function criarRepositorio(db) {
       return expira;
     },
     usuarioDaSessao(token) {
-      const u = q(`SELECT u.id, u.email, u.nome, u.perfil, s.expira_em FROM sessao s JOIN usuario u ON u.id = s.usuario_id
-        WHERE s.token_hash = ? AND s.expira_em > ? AND u.ativo = 1`).get(hashToken(token), agora());
-      return u ? { ...u, unidades: unidadesDoUsuario.all(u.id).map((r) => r.sigla) } : null;
+      return comUnidades(q(`SELECT u.id, u.email, u.nome, u.perfil, u.trocar_senha, s.expira_em FROM sessao s JOIN usuario u ON u.id = s.usuario_id
+        WHERE s.token_hash = ? AND s.expira_em > ? AND u.ativo = 1`).get(hashToken(token), agora()));
     },
     encerrarSessao: (token) => q('DELETE FROM sessao WHERE token_hash = ?').run(hashToken(token)),
+    /** Encerra todas as sessoes do usuario, menos a do token informado (a sessao atual, ao trocar a propria senha). */
+    encerrarSessoesDoUsuario: (id, excetoToken = null) =>
+      q('DELETE FROM sessao WHERE usuario_id = ? AND token_hash IS NOT ?').run(id, excetoToken ? hashToken(excetoToken) : null),
     limparSessoesExpiradas: () => q('DELETE FROM sessao WHERE expira_em <= ?').run(agora()),
 
     // ------------------------------------------------------------------ auditoria
@@ -153,6 +184,33 @@ function criarRepositorio(db) {
         alertas: q(`SELECT a.processamento_id, a.tipo, a.ocorrencias, a.contas FROM alerta_resumo a JOIN processamento p ON p.id = a.processamento_id WHERE ${filtro}`).all(...args).map((r) => ({ ...r })),
         procedimentos: q(`SELECT r.processamento_id, r.codigo, r.descricao, r.quantidade FROM procedimento_resumo r JOIN processamento p ON p.id = r.processamento_id WHERE ${filtro}`).all(...args).map((r) => ({ ...r })),
       };
+    },
+
+    /**
+     * Historico de envios (vigentes e substituidos) das unidades `siglas`, mais recentes primeiro.
+     * Traz quem enviou e os indicadores do envio; nada de paciente.
+     */
+    historico(siglas, { sigla = null, ferramenta = null, limite = 300 } = {}) {
+      if (!siglas.length) return [];
+      const filtros = [`p.sigla IN (${placeholders(siglas)})`];
+      const args = [...siglas];
+      if (sigla) {
+        filtros.push('p.sigla = ?');
+        args.push(sigla);
+      }
+      if (ferramenta) {
+        filtros.push('p.ferramenta = ?');
+        args.push(ferramenta);
+      }
+      args.push(limite);
+      return q(`SELECT p.id, p.ferramenta, p.sigla, p.competencia, p.criado_em, p.arquivo_nome, p.sigtap_competencia, p.vigente,
+          u.nome AS enviado_por,
+          (SELECT json_group_object(i.chave, i.valor) FROM indicador i WHERE i.processamento_id = p.id) AS indicadores,
+          (SELECT count(*) FROM alerta_resumo a WHERE a.processamento_id = p.id AND a.contas > 0) AS tipos_alerta
+        FROM processamento p LEFT JOIN usuario u ON u.id = p.usuario_id
+        WHERE ${filtros.join(' AND ')}
+        ORDER BY p.criado_em DESC, p.id DESC LIMIT ?`).all(...args)
+        .map((r) => ({ ...r, vigente: Boolean(r.vigente), indicadores: JSON.parse(r.indicadores || '{}') }));
     },
 
     contarProcessamentos: () => Number(q('SELECT count(*) AS n FROM processamento').get().n),
