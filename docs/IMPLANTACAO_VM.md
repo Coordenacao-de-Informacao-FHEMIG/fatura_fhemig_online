@@ -9,7 +9,11 @@ O site precisa ser servido em **HTTPS**: o navegador só calcula o SHA-256 do ar
 
 ## 1. Gerar o pacote
 
-Numa máquina com Node 22 e a pasta completa do projeto, onde estão as planilhas reais das unidades e `../arquivos de teste`:
+Numa máquina com Node 22.13 ou mais novo e a pasta do projeto:
+
+1. **Planilhas das unidades:** coloque-as em `dados/vm/bases/`, uma pasta por unidade e por ferramenta. O passo a passo, os nomes aceitos e o que pedir à coordenação de faturamento estão em [`dados/vm/LEIA-ME.md`](../dados/vm/LEIA-ME.md).
+2. **SIGTAP:** as competências publicadas ficam em `public/sigtap/` (ver a seção 4).
+3. **Build:**
 
 ```bash
 npm ci
@@ -19,7 +23,9 @@ npm ci
 npm run build:vm
 ```
 
-O resultado fica em `dist-vm/`, com a aplicação, as bases SIGTAP e `bases/` (planilhas reais das unidades). O modo demonstração não existe nesse build.
+O build lista o que encontrou por unidade e avisa o que falta. Ele para com erro se houver pasta com sigla desconhecida, duas planilhas do mesmo tipo na mesma pasta ou planilha com a sigla de outra unidade no nome.
+
+O resultado fica em `dist-vm/`: a aplicação, as bases SIGTAP e `bases/`, só com as planilhas listadas em `bases/manifest.json`. O modo demonstração não existe nesse build.
 
 > `dist-vm/bases/` contém nome, CPF e CNS de servidores (Profissionais, Carga horária e ADC). Copie a pasta só para a VM, por canal interno. Não publique fora da rede do Estado nem envie para o Netlify.
 
@@ -75,7 +81,7 @@ server {
 ## 4. Atualizações
 
 - **SIGTAP:** gere as bases com `npm run sigtap -- "<pasta Sigtap>" "<SIGTAPMMAAAA.xlsx>"`, refaça o `build:vm` e publique. Não há importação pela tela: a escolha é automática (mesma competência da produção ou a anterior mais próxima), então basta manter as competências novas publicadas em `sigtap/`.
-- **Bases das unidades:** atualize as planilhas na pasta do projeto, acrescente unidades novas em `scripts/preparar-dados.mjs` (bloco `vm`), refaça o `build:vm` e publique. Também é possível substituir só o arquivo em `bases/…` na VM, desde que se mantenha o nome listado em `bases/manifest.json`.
+- **Bases das unidades:** substitua a planilha em `dados/vm/bases/<ferramenta>/<SIGLA>/` (sem deixar a antiga ao lado), refaça o `build:vm` e publique. Unidade nova é só uma pasta nova com a sigla, sem mexer em código. Também é possível substituir só o arquivo em `bases/…` na VM, desde que se mantenha exatamente o nome listado em `bases/manifest.json` (o Linux diferencia maiúsculas, minúsculas e acentos).
 - **Regras:** mude o motor em `src/engine/`, atualize as referências de paridade (`scripts/paridade/gerar_referencia.py`) e confirme `npm test` antes de publicar.
 
 ## 5. API da Área do gestor (painel gerencial)

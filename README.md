@@ -49,9 +49,11 @@ São as planilhas que ficavam ao lado do `.exe`: Serviço/Classificação, Habil
 | Modo | Origem das bases | Pasta | Uso |
 | --- | --- | --- | --- |
 | `netlify` | Só os dados **simulados** de `../arquivos de teste` | `dados/netlify/` (versionada) | Ambiente de testes, com botões "Modo demonstração" |
-| `vm` | Planilhas reais que existem hoje na pasta do projeto, listadas em `scripts/preparar-dados.mjs` | `dados/vm/` (fora do git, exceto Habilitação e Serviço/Classificação) | VM do Governo de MG |
+| `vm` | Planilhas reais colocadas em `dados/vm/bases/<ferramenta>/<SIGLA>/` e `dados/vm/bases/checa/` | `dados/vm/` (fora do git, exceto Habilitação e Serviço/Classificação) | VM do Governo de MG |
 
-Habilitação e Serviço/Classificação reais estão versionadas: são cadastro da unidade, sem dados pessoais. Profissionais, Carga horária e ADC têm nome, CPF e CNS de servidores, por isso ficam fora do git, que é público, e nunca vão para o Netlify. Em cada computador novo, copie essas planilhas para `dados/vm/` ou rode `node scripts/preparar-dados.mjs vm`. Para incluir outras unidades, acrescente-as em `scripts/preparar-dados.mjs`, no bloco `vm`.
+No modo `vm`, a pasta `dados/vm/bases/` é a fonte: o tipo de cada planilha sai do nome do arquivo e a unidade, do nome da pasta. O `build:vm` e o `dev:vm` refazem o `bases/manifest.json` sozinhos (`scripts/preparar-vm.mjs`). Unidade nova é só uma pasta nova com a sigla. Regras de nome e lista do que pedir à coordenação: [`dados/vm/LEIA-ME.md`](dados/vm/LEIA-ME.md).
+
+Habilitação e Serviço/Classificação reais estão versionadas: são cadastro da unidade, sem dados pessoais. Profissionais, Carga horária e ADC têm nome, CPF e CNS de servidores, por isso ficam fora do git, que é público, e nunca vão para o Netlify. Em cada computador novo, copie essas planilhas para `dados/vm/bases/`.
 
 ## Área do gestor (API)
 

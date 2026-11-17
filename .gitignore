@@ -4,6 +4,7 @@ dist-*/
 # Bases reais das unidades (nome, CPF e CNS de servidores). Nunca versionar nem publicar no Netlify.
 dados/vm/**
 !dados/vm/**/
+!dados/vm/LEIA-ME.md
 # Exceção: Habilitação e Serviço/Classificação reais (cadastro da unidade, sem dados pessoais).
 # Profissionais, Carga horária e ADC (nome, CPF, CNS) continuam FORA do git.
 !dados/vm/bases/hospitalar/*/Habilita*.xlsx

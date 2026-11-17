@@ -1,19 +1,22 @@
 // Monta as bases das unidades e os exemplos servidos pelo site.
 //
 //   node scripts/preparar-dados.mjs netlify   -> dados/netlify (SO dados sinteticos de "arquivos de teste")
-//   node scripts/preparar-dados.mjs vm        -> dados/vm (planilhas reais das unidades; pasta fora do git)
+//   node scripts/preparar-dados.mjs vm        -> dados/vm (planilhas reais colocadas em dados/vm/bases; ver preparar-vm.mjs)
 //
 // Cada modo gera bases/manifest.json, que o site le para carregar sozinho as
 // planilhas da unidade selecionada (o equivalente as planilhas ao lado do .exe).
 import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { prepararVm } from './preparar-vm.mjs';
 
 const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PAI = resolve(RAIZ, '..');
 // Massa sintetica de teste: dentro do repositorio (ou, no layout antigo, na pasta-mae).
 const TESTE = existsSync(join(RAIZ, 'arquivos de teste')) ? join(RAIZ, 'arquivos de teste') : join(PAI, 'arquivos de teste');
 const modo = process.argv[2] || 'netlify';
+
+if (modo === 'vm') process.exit(prepararVm(join(RAIZ, 'dados', 'vm')) ? 0 : 1);
 
 const FONTES = {
   netlify: {
@@ -51,32 +54,6 @@ const FONTES = {
         { papel: 'cnes_alternativo', arquivo: join(TESTE, 'teste ChecaProfissionais', 'CNES Profissionais HAC - UNIDADE ERRADA (TESTE).xlsx'), unidade: 'HIJPII' },
       ],
     },
-  },
-  vm: {
-    hospitalar: {
-      HJXXIII: {
-        servico: join(PAI, 'Fatura Fhemig 14.3', 'Serviço e Classificação HJXXIII.xlsx'),
-        habilitacao: join(PAI, 'Fatura Fhemig 14.3', 'Habilitações HJXXIII.xlsx'),
-      },
-      HIJPII: {
-        servico: join(PAI, 'Serviço Classificação HIJPII 1 (1).xlsx'),
-        habilitacao: join(PAI, 'Habilitacao HIJPII 1 (1).xlsx'),
-        profissionais: join(PAI, 'Profissionais HIJPII 2.xlsx'),
-      },
-    },
-    ambulatorial: {
-      HRBJA: {
-        profissionais: join(PAI, 'Fatura Fhemig Ambulatorial', 'Profissionais HRBJA 2.xlsx'),
-        carga_horaria: join(PAI, 'Fatura Fhemig Ambulatorial', 'Carga Horária Profissionais HRBJA.xlsx'),
-        servico_classificacao: join(PAI, 'Fatura Fhemig Ambulatorial', 'Serviço Classificação HRBJA.xlsx'),
-        habilitacao: join(PAI, 'Fatura Fhemig Ambulatorial', 'Habilitações HRBJA.xlsx'),
-      },
-    },
-    checa: {
-      adc: join(PAI, 'ChecaProfissionais 2.0', 'base_padrao', 'Profissionais ADC.xlsx'),
-      cbo: join(PAI, 'ChecaProfissionais 2.0', 'base_padrao', 'CBO_assistencial.xlsx'),
-    },
-    exemplos: {},
   },
 };
 
