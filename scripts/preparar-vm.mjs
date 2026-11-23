@@ -1,18 +1,19 @@
 // Modo vm: as pastas de dados/vm sao a fonte das planilhas reais.
 //
-//   dados/vm/geral/                       BASE GERAL de profissionais (todas as unidades numa planilha so,
-//                                         .csv ou .xlsx). Vale para Profissionais (Hospitalar e Ambulatorial)
-//                                         e Carga horaria (Ambulatorial) de TODAS as unidades que aparecem nela.
-//   dados/vm/bases/hospitalar/<SIGLA>/    Servico e Classificacao, Habilitacoes (e Profissionais, se nao houver base geral)
-//   dados/vm/bases/ambulatorial/<SIGLA>/  Servico/Classificacao, Habilitacoes (e Profissionais/Carga horaria idem)
+//   dados/vm/geral/                       BASE GERAL: uma planilha com TODAS as unidades (abas Servico/Classificacao,
+//                                         Habilitacoes, Profissionais e CBOs assistenciais). Vale para toda unidade
+//                                         que aparece nela e tem precedencia sobre as planilhas por unidade.
+//   dados/vm/bases/hospitalar/<SIGLA>/    planilhas por unidade (so para o que a base geral nao cobrir)
+//   dados/vm/bases/ambulatorial/<SIGLA>/  idem
 //   dados/vm/bases/checa/                 Profissionais ADC, CBO assistencial
 //
 // O tipo de cada planilha sai do nome do arquivo e a unidade, do nome da pasta.
-// Escreve bases/manifest.json e, havendo base geral, bases/geral/profissionais.json (ja limpo).
+// Escreve bases/manifest.json e, havendo base geral, bases/geral/base-geral.json (ja limpo)
+// e bases/geral/CBO_assistencial.xlsx.
 import { existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { UNIDADES } from '../src/engine/unidades.js';
-import { lerBaseGeral } from './base-geral.mjs';
+import { lerBaseGeral, NOME_TABELA } from './base-geral.mjs';
 
 // Ordem importa: o primeiro padrao que casar define o tipo
 // ("Carga Horaria Profissionais HRBJA" e carga horaria, nao profissionais).
@@ -33,12 +34,26 @@ const TIPOS = {
     ['cbo', /\bcbo\b/, 'CBO assistencial'],
   ],
 };
-// Tipos que a base geral preenche em cada ferramenta.
-const DA_BASE_GERAL = { hospitalar: ['profissionais'], ambulatorial: ['profissionais', 'carga_horaria'] };
+// Slot de cada ferramenta -> tabela da base geral que o preenche.
+const DA_BASE_GERAL = {
+  hospitalar: { servico: 'servico', habilitacao: 'habilitacao', profissionais: 'profissionais' },
+  ambulatorial: { servico_classificacao: 'servico', habilitacao: 'habilitacao', profissionais: 'profissionais', carga_horaria: 'profissionais' },
+};
 const EXTENSOES = /\.(xlsx|xlsm)$/i;
 const EXTENSOES_GERAL = /\.(csv|xlsx|xlsm)$/i;
 const SIGLAS = UNIDADES.map((u) => u.sigla).filter((s) => s !== 'ADC');
-const CAMINHO_GERAL = 'bases/geral/profissionais.json';
+const CAMINHO_GERAL = 'bases/geral/base-geral.json';
+const CAMINHO_CBO = 'bases/geral/CBO_assistencial.xlsx';
+
+/** CBO_assistencial.xlsx no formato que o ChecaProfissionais lê (CBO, DESCRICAO, FHEMIG ASSISTENCIAL). */
+async function gravarCboAssistencial(destino, cbos) {
+  const { default: ExcelJS } = await import('exceljs');
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('CBO GERAL');
+  ws.addRow(['CBO', 'DESCRICAO', 'FHEMIG ASSISTENCIAL']);
+  for (const [cbo, desc] of cbos) ws.addRow([cbo, desc, 'SIM']);
+  writeFileSync(destino, Buffer.from(await wb.xlsx.writeBuffer()));
+}
 
 const normalizar = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 const ehPasta = (p) => statSync(p).isDirectory();
@@ -115,9 +130,10 @@ export async function prepararVm(destino) {
     }
   }
 
-  // ---- Base geral de profissionais (dados/vm/geral): substitui Profissionais/Carga horaria por unidade.
+  // ---- Base geral (dados/vm/geral): substitui as planilhas por unidade no que ela cobrir.
   const pastaGeral = join(destino, 'geral');
   const saidaGeral = join(destino, CAMINHO_GERAL);
+  const saidaCbo = join(destino, CAMINHO_CBO);
   const fontes = existsSync(pastaGeral) ? readdirSync(pastaGeral).filter((n) => !ignorado(n) && EXTENSOES_GERAL.test(n)).sort() : [];
   let geral = null;
   if (fontes.length > 1) erros.push(`geral/: há ${fontes.length} arquivos (${fontes.join(', ')}). Deixe só a base geral atual.`);
@@ -131,20 +147,27 @@ export async function prepararVm(destino) {
     }
   }
   if (geral) {
-    for (const [ferramenta, tipos] of Object.entries(DA_BASE_GERAL)) {
-      for (const sigla of Object.keys(geral.porUnidade)) {
-        manifest[ferramenta][sigla] ??= {};
-        for (const tipo of tipos) {
-          if (tipo === 'carga_horaria' && !geral.temCarga) continue;
-          const local = manifest[ferramenta][sigla][tipo];
+    for (const [ferramenta, slots] of Object.entries(DA_BASE_GERAL)) {
+      for (const [slot, tabela] of Object.entries(slots)) {
+        if (!geral.tabelas[tabela] || (slot === 'carga_horaria' && !geral.temCarga)) continue;
+        for (const sigla of Object.keys(geral.porUnidade[tabela])) {
+          manifest[ferramenta][sigla] ??= {};
+          const local = manifest[ferramenta][sigla][slot];
           if (local) avisos.push(`${local.caminho.replace(/^bases\//, '')}: ignorada; vale a base geral (${geral.fonte}).`);
-          manifest[ferramenta][sigla][tipo] = { nome: `${geral.fonte} · ${sigla}`, caminho: CAMINHO_GERAL, unidade: sigla };
+          manifest[ferramenta][sigla][slot] = {
+            nome: `${slot === 'carga_horaria' ? 'Carga horária' : NOME_TABELA[tabela]} ${sigla} · ${geral.fonte}`,
+            caminho: CAMINHO_GERAL, unidade: sigla, tabela,
+          };
         }
       }
     }
   }
 
   if (existsSync(join(bases, 'checa'))) manifest.checa = lerPasta('checa', join(bases, 'checa'), 'checa', null);
+  if (geral?.cbosAssistenciais?.length) {
+    if (manifest.checa.cbo) avisos.push(`${manifest.checa.cbo.caminho.replace(/^bases\//, '')}: ignorada; vale a lista de CBOs assistenciais da base geral.`);
+    manifest.checa.cbo = { nome: `CBO assistencial · ${geral.fonte}`, caminho: CAMINHO_CBO };
+  }
   if (TIPOS.checa.some(([id]) => !manifest.checa[id])) {
     const faltam = TIPOS.checa.filter(([id]) => !manifest.checa[id]).map(([, , d]) => d);
     avisos.push(`checa/: falta ${faltam.join(', ')}. O ChecaProfissionais fica bloqueado.`);
@@ -165,13 +188,23 @@ export async function prepararVm(destino) {
     return false;
   }
 
+  // Saídas antigas ou de uma base geral removida não podem sobrar.
+  rmSync(join(bases, 'geral'), { recursive: true, force: true });
   if (geral) {
     mkdirSync(join(bases, 'geral'), { recursive: true });
-    const conteudo = { fonte: geral.fonte, gerado_em: manifest.gerado_em, colunas: geral.colunas, linhas: geral.linhas };
-    writeFileSync(saidaGeral, JSON.stringify(conteudo));
-    const porUnidade = Object.entries(geral.porUnidade).sort().map(([s, n]) => `${s} ${n}`).join(', ');
-    console.log(`Base geral: ${geral.fonte} → ${geral.linhas.length} linhas (${porUnidade})`);
-  } else if (existsSync(saidaGeral)) rmSync(saidaGeral);
+    if (Object.keys(geral.tabelas).length) {
+      writeFileSync(saidaGeral, JSON.stringify({ fonte: geral.fonte, gerado_em: manifest.gerado_em, tabelas: geral.tabelas }));
+    }
+    console.log(`Base geral: ${geral.fonte}`);
+    for (const [tabela, t] of Object.entries(geral.tabelas)) {
+      const porUnidade = Object.entries(geral.porUnidade[tabela]).sort().map(([s, n]) => `${s} ${n}`).join(', ');
+      console.log(`  ${NOME_TABELA[tabela]}: ${t.linhas.length} linhas (${porUnidade})`);
+    }
+    if (geral.cbosAssistenciais?.length) {
+      await gravarCboAssistencial(saidaCbo, geral.cbosAssistenciais);
+      console.log(`  CBOs assistenciais: ${geral.cbosAssistenciais.length} (→ ${CAMINHO_CBO})`);
+    }
+  }
   writeFileSync(join(bases, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
 
   const resumo = (f) => Object.entries(manifest[f]).sort()

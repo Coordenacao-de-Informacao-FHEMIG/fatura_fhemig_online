@@ -380,8 +380,8 @@ async function slotParaEnvio(fid, slotId, transferir) {
     return { nome: arq.name, bytes };
   }
   const s = baseServidor(fid, slotId);
-  // unidade: só nas entradas da base geral (todas as unidades num arquivo; o worker filtra).
-  return s ? { nome: s.nome, servidor: s.caminho, ...(s.unidade ? { unidade: s.unidade } : {}) } : null;
+  // unidade/tabela: só nas entradas da base geral (todas as unidades num arquivo; o worker filtra).
+  return s ? { nome: s.nome, servidor: s.caminho, ...(s.unidade ? { unidade: s.unidade, tabela: s.tabela } : {}) } : null;
 }
 
 async function processar(fid) {

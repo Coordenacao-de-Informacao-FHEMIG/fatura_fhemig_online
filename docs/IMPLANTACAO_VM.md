@@ -15,7 +15,7 @@ O site precisa ser servido em **HTTPS**: o navegador só calcula o SHA-256 do ar
 
 Numa máquina com Node 22.13 ou mais novo e a pasta do projeto:
 
-1. **Planilhas:** a **base geral de profissionais** (todas as unidades, relatório do CNES) vai em `dados/vm/geral/`; Serviço/Classificação e Habilitações vão em `dados/vm/bases/`, uma pasta por unidade e por ferramenta. O passo a passo, os nomes aceitos e o que pedir à coordenação de faturamento estão em [`dados/vm/LEIA-ME.md`](../dados/vm/LEIA-ME.md).
+1. **Planilhas:** a **base geral** do faturamento (todas as unidades; abas Serviço/Classificação, Habilitações, Profissionais e CBOs assistenciais) vai em `dados/vm/geral/`. A base ADC do ChecaProfissionais vai em `dados/vm/bases/checa/`, e planilhas por unidade em `dados/vm/bases/` só para o que a base geral não cobrir. O passo a passo, os nomes aceitos e o que pedir à coordenação de faturamento estão em [`dados/vm/LEIA-ME.md`](../dados/vm/LEIA-ME.md).
 2. **SIGTAP:** as competências publicadas ficam em `public/sigtap/` (ver a seção 4).
 3. **Build:**
 
@@ -31,7 +31,7 @@ O build lista o que encontrou por unidade e avisa o que falta. Ele para com erro
 
 O resultado fica em `dist-vm/`: a aplicação, as bases SIGTAP e `bases/`, só com as planilhas listadas em `bases/manifest.json`. O modo demonstração não existe nesse build.
 
-> `dist-vm/bases/` contém nome e CNS de servidores (base geral de profissionais, `bases/geral/profissionais.json`, e eventuais planilhas de Profissionais, Carga horária e ADC). Copie a pasta só para a VM, por canal interno. Não publique fora da rede do Estado nem envie para o Netlify.
+> `dist-vm/bases/` contém nome e CNS de servidores (base geral das unidades, `bases/geral/base-geral.json`, e eventuais planilhas de Profissionais, Carga horária e ADC). Copie a pasta só para a VM, por canal interno. Não publique fora da rede do Estado nem envie para o Netlify.
 
 ## 2. Publicar
 

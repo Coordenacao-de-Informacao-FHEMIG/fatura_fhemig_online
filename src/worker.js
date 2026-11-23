@@ -97,7 +97,7 @@ async function resolverArquivo(slot) {
   return null;
 }
 
-// Base geral de profissionais (todas as unidades): baixada uma vez e filtrada pela unidade.
+// Base geral (todas as unidades): baixada uma vez e filtrada pela unidade e pela tabela.
 const basesGerais = new Map();
 async function baseGeral(caminho) {
   if (!basesGerais.has(caminho)) basesGerais.set(caminho, baixar(caminho).then((b) => JSON.parse(strFromU8(b))));
@@ -111,8 +111,8 @@ async function baseGeral(caminho) {
 
 async function resolverPlanilha(slot) {
   if (slot?.servidor && slot.unidade && /\.json$/i.test(slot.servidor)) {
-    const planilha = planilhaDaBaseGeral(await baseGeral(slot.servidor), slot.unidade);
-    return { nome: slot.nome, planilha, origem: 'base geral de profissionais do CNES' };
+    const planilha = planilhaDaBaseGeral(await baseGeral(slot.servidor), slot.unidade, slot.tabela || 'profissionais');
+    return { nome: slot.nome, planilha, origem: 'base geral das unidades' };
   }
   const a = await resolverArquivo(slot);
   if (!a) return null;
