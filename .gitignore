@@ -11,6 +11,11 @@ dados/vm/**
 !dados/vm/bases/hospitalar/*/Servi*.xlsx
 !dados/vm/bases/ambulatorial/*/Habilita*.xlsx
 !dados/vm/bases/ambulatorial/*/Servi*.xlsx
+# Planilhas soltas na raiz (podem ter nome, CPF e CNS): o lugar delas é dados/vm/.
+/*.csv
+/*.xlsx
+/*.xlsm
+/*.xls
 *.log
 .DS_Store
 # banco da API (fica so na VM)

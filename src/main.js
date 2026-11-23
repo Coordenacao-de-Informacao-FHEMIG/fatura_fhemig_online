@@ -380,7 +380,8 @@ async function slotParaEnvio(fid, slotId, transferir) {
     return { nome: arq.name, bytes };
   }
   const s = baseServidor(fid, slotId);
-  return s ? { nome: s.nome, servidor: s.caminho } : null;
+  // unidade: só nas entradas da base geral (todas as unidades num arquivo; o worker filtra).
+  return s ? { nome: s.nome, servidor: s.caminho, ...(s.unidade ? { unidade: s.unidade } : {}) } : null;
 }
 
 async function processar(fid) {
@@ -431,7 +432,7 @@ async function processar(fid) {
     definirEstado(fid, 'Concluído', 'etiqueta-ok');
     await renderizarResultado(painel.querySelector('[data-resultado]'), r, nomeEntrada);
     registrarHistorico(fid, r, nomeEntrada);
-    if (await apiDisponivel()) {
+    if (!GESTOR_EM_DESENVOLVIMENTO && (await apiDisponivel())) {
       const arquivos = fid === 'checa' ? [st.arquivos.tasy, st.arquivos.cnes] : [st.arquivos.entrada];
       sha256DeArquivos(arquivos)
         .then((sha) => oferecerEnvio(painel.querySelector('[data-resultado]'), r, { arquivoNome: nomeEntrada, arquivoSha256: sha, versaoRegras: f.versao || '' }))
@@ -560,8 +561,23 @@ function mostrarGestor(ativo) {
   scrollTo(0, 0);
 }
 
+// Área do gestor desligada por enquanto (botão acinzentado com a dica "Em desenvolvimento").
+// Para religar: false. Com true, o painel não abre e o resultado não oferece o envio ao painel.
+const GESTOR_EM_DESENVOLVIMENTO = true;
+
 function ligarGestor() {
-  $('#botao-gestor').addEventListener('click', async () => {
+  const botao = $('#botao-gestor');
+  if (GESTOR_EM_DESENVOLVIMENTO) {
+    botao.classList.add('em-desenvolvimento');
+    botao.dataset.dica = 'Em desenvolvimento';
+    botao.setAttribute('aria-disabled', 'true');
+    botao.removeAttribute('aria-haspopup');
+    botao.setAttribute('aria-label', 'Área do gestor (em desenvolvimento)');
+    botao.addEventListener('click', () => toast('A Área do gestor está em desenvolvimento.'));
+    if (location.hash === '#gestor') history.replaceState(null, '', location.pathname);
+    return;
+  }
+  botao.addEventListener('click', async () => {
     if (!$('#area-gestor').hidden) mostrarGestor(false);
     else if (await logado()) mostrarGestor(true);
     else abrirLogin(() => mostrarGestor(true));
@@ -573,7 +589,7 @@ function ligarGestor() {
 // Envio do resumo ao painel gerencial (so com a API da VM; so totais)
 // ---------------------------------------------------------------------------
 async function oferecerEnvio(alvo, r, extra) {
-  if (!(await apiDisponivel())) return;
+  if (GESTOR_EM_DESENVOLVIMENTO || !(await apiDisponivel())) return;
   let resumo;
   try {
     resumo = montarResumoGestao(r, extra);

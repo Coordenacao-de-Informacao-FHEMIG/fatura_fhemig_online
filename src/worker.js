@@ -6,6 +6,7 @@
 // o usuario envia apenas o arquivo de producao.
 import { gunzipSync, strFromU8 } from 'fflate';
 import { lerPlanilha } from './engine/comum/planilha.js';
+import { planilhaDaBaseGeral } from './engine/comum/base-geral.js';
 import {
   fonteCompacta, montarSigtapHospitalar, montarSigtapAmbulatorial, escolherSigtapPorCompetencia, desserializar,
 } from './engine/sigtap/sigtap.js';
@@ -96,7 +97,23 @@ async function resolverArquivo(slot) {
   return null;
 }
 
+// Base geral de profissionais (todas as unidades): baixada uma vez e filtrada pela unidade.
+const basesGerais = new Map();
+async function baseGeral(caminho) {
+  if (!basesGerais.has(caminho)) basesGerais.set(caminho, baixar(caminho).then((b) => JSON.parse(strFromU8(b))));
+  try {
+    return await basesGerais.get(caminho);
+  } catch (e) {
+    basesGerais.delete(caminho);
+    throw e;
+  }
+}
+
 async function resolverPlanilha(slot) {
+  if (slot?.servidor && slot.unidade && /\.json$/i.test(slot.servidor)) {
+    const planilha = planilhaDaBaseGeral(await baseGeral(slot.servidor), slot.unidade);
+    return { nome: slot.nome, planilha, origem: 'base geral de profissionais do CNES' };
+  }
   const a = await resolverArquivo(slot);
   if (!a) return null;
   return { ...a, planilha: await lerPlanilha(a.bytes, a.nome) };

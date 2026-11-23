@@ -1,14 +1,18 @@
-// Modo vm: a propria pasta dados/vm/bases e a fonte das planilhas reais.
+// Modo vm: as pastas de dados/vm sao a fonte das planilhas reais.
 //
-//   dados/vm/bases/hospitalar/<SIGLA>/    Servico e Classificacao, Habilitacoes, Profissionais
-//   dados/vm/bases/ambulatorial/<SIGLA>/  Servico/Classificacao, Habilitacoes, Profissionais, Carga horaria
+//   dados/vm/geral/                       BASE GERAL de profissionais (todas as unidades numa planilha so,
+//                                         .csv ou .xlsx). Vale para Profissionais (Hospitalar e Ambulatorial)
+//                                         e Carga horaria (Ambulatorial) de TODAS as unidades que aparecem nela.
+//   dados/vm/bases/hospitalar/<SIGLA>/    Servico e Classificacao, Habilitacoes (e Profissionais, se nao houver base geral)
+//   dados/vm/bases/ambulatorial/<SIGLA>/  Servico/Classificacao, Habilitacoes (e Profissionais/Carga horaria idem)
 //   dados/vm/bases/checa/                 Profissionais ADC, CBO assistencial
 //
 // O tipo de cada planilha sai do nome do arquivo e a unidade, do nome da pasta.
-// Nada e copiado nem apagado: so o bases/manifest.json e (re)escrito.
-import { existsSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+// Escreve bases/manifest.json e, havendo base geral, bases/geral/profissionais.json (ja limpo).
+import { existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { UNIDADES } from '../src/engine/unidades.js';
+import { lerBaseGeral } from './base-geral.mjs';
 
 // Ordem importa: o primeiro padrao que casar define o tipo
 // ("Carga Horaria Profissionais HRBJA" e carga horaria, nao profissionais).
@@ -29,15 +33,19 @@ const TIPOS = {
     ['cbo', /\bcbo\b/, 'CBO assistencial'],
   ],
 };
+// Tipos que a base geral preenche em cada ferramenta.
+const DA_BASE_GERAL = { hospitalar: ['profissionais'], ambulatorial: ['profissionais', 'carga_horaria'] };
 const EXTENSOES = /\.(xlsx|xlsm)$/i;
+const EXTENSOES_GERAL = /\.(csv|xlsx|xlsm)$/i;
 const SIGLAS = UNIDADES.map((u) => u.sigla).filter((s) => s !== 'ADC');
+const CAMINHO_GERAL = 'bases/geral/profissionais.json';
 
 const normalizar = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 const ehPasta = (p) => statSync(p).isDirectory();
 const ignorado = (nome) => nome.startsWith('~$') || nome.startsWith('.');
 
 /** Monta dados/vm/bases/manifest.json. Devolve false se houver erro que impeca o build. */
-export function prepararVm(destino) {
+export async function prepararVm(destino) {
   const bases = join(destino, 'bases');
   const erros = [];
   const avisos = [];
@@ -84,8 +92,6 @@ export function prepararVm(destino) {
       }
       achados[id] = { nome, caminho: `bases/${local}` };
     }
-    const faltam = TIPOS[ferramenta].filter(([id]) => !achados[id]).map(([, , d]) => d);
-    if (faltam.length) avisos.push(`${rel}: falta ${faltam.join(', ')}. ${sigla ? `A ferramenta fica bloqueada para ${sigla}.` : 'O ChecaProfissionais fica bloqueado.'}`);
     return achados;
   };
 
@@ -108,18 +114,68 @@ export function prepararVm(destino) {
       if (Object.keys(achados).length) manifest[ferramenta][sigla] = achados;
     }
   }
+
+  // ---- Base geral de profissionais (dados/vm/geral): substitui Profissionais/Carga horaria por unidade.
+  const pastaGeral = join(destino, 'geral');
+  const saidaGeral = join(destino, CAMINHO_GERAL);
+  const fontes = existsSync(pastaGeral) ? readdirSync(pastaGeral).filter((n) => !ignorado(n) && EXTENSOES_GERAL.test(n)).sort() : [];
+  let geral = null;
+  if (fontes.length > 1) erros.push(`geral/: há ${fontes.length} arquivos (${fontes.join(', ')}). Deixe só a base geral atual.`);
+  else if (fontes.length === 1) {
+    try {
+      geral = await lerBaseGeral(join(pastaGeral, fontes[0]), SIGLAS);
+      avisos.push(...geral.avisos);
+      geral.fonte = fontes[0];
+    } catch (e) {
+      erros.push(`geral/${e.message}`);
+    }
+  }
+  if (geral) {
+    for (const [ferramenta, tipos] of Object.entries(DA_BASE_GERAL)) {
+      for (const sigla of Object.keys(geral.porUnidade)) {
+        manifest[ferramenta][sigla] ??= {};
+        for (const tipo of tipos) {
+          if (tipo === 'carga_horaria' && !geral.temCarga) continue;
+          const local = manifest[ferramenta][sigla][tipo];
+          if (local) avisos.push(`${local.caminho.replace(/^bases\//, '')}: ignorada; vale a base geral (${geral.fonte}).`);
+          manifest[ferramenta][sigla][tipo] = { nome: `${geral.fonte} · ${sigla}`, caminho: CAMINHO_GERAL, unidade: sigla };
+        }
+      }
+    }
+  }
+
   if (existsSync(join(bases, 'checa'))) manifest.checa = lerPasta('checa', join(bases, 'checa'), 'checa', null);
-  else avisos.push('checa/: pasta ausente. O ChecaProfissionais fica bloqueado.');
+  if (TIPOS.checa.some(([id]) => !manifest.checa[id])) {
+    const faltam = TIPOS.checa.filter(([id]) => !manifest.checa[id]).map(([, , d]) => d);
+    avisos.push(`checa/: falta ${faltam.join(', ')}. O ChecaProfissionais fica bloqueado.`);
+  }
+
+  // Resumo do que falta, agrupado por tipo (a ferramenta fica bloqueada para a unidade).
+  for (const ferramenta of ['hospitalar', 'ambulatorial']) {
+    for (const [id, , descricao] of TIPOS[ferramenta]) {
+      const sem = Object.keys(manifest[ferramenta]).filter((s) => !manifest[ferramenta][s][id]).sort();
+      if (sem.length) avisos.push(`${ferramenta}: sem ${descricao} em ${sem.join(', ')} (ferramenta bloqueada nessas unidades).`);
+    }
+  }
 
   for (const a of avisos) console.warn(`  aviso: ${a}`);
   if (erros.length) {
     for (const e of erros) console.error(`  ERRO: ${e}`);
-    console.error('Corrija os erros acima em dados/vm/bases e rode de novo.');
+    console.error('Corrija os erros acima em dados/vm e rode de novo.');
     return false;
   }
+
+  if (geral) {
+    mkdirSync(join(bases, 'geral'), { recursive: true });
+    const conteudo = { fonte: geral.fonte, gerado_em: manifest.gerado_em, colunas: geral.colunas, linhas: geral.linhas };
+    writeFileSync(saidaGeral, JSON.stringify(conteudo));
+    const porUnidade = Object.entries(geral.porUnidade).sort().map(([s, n]) => `${s} ${n}`).join(', ');
+    console.log(`Base geral: ${geral.fonte} → ${geral.linhas.length} linhas (${porUnidade})`);
+  } else if (existsSync(saidaGeral)) rmSync(saidaGeral);
   writeFileSync(join(bases, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
 
-  const resumo = (f) => Object.entries(manifest[f]).map(([s, t]) => `${s} (${Object.keys(t).length}/${TIPOS[f].length})`).join(', ') || 'nenhuma unidade';
+  const resumo = (f) => Object.entries(manifest[f]).sort()
+    .map(([s, t]) => `${s} ${TIPOS[f].every(([id]) => t[id]) ? 'completa' : `${Object.keys(t).length}/${TIPOS[f].length}`}`).join(', ') || 'nenhuma unidade';
   console.log(`Hospitalar: ${resumo('hospitalar')}`);
   console.log(`Ambulatorial: ${resumo('ambulatorial')}`);
   console.log(`ChecaProfissionais: ${Object.keys(manifest.checa).length}/${TIPOS.checa.length} bases`);

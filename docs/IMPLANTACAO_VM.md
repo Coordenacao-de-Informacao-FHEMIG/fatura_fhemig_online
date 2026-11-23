@@ -5,13 +5,17 @@ O Fatura Fhemig Online tem duas partes:
 - **Site estático** (obrigatório): as três ferramentas. Basta um servidor web (nginx, IIS ou Apache). O processamento acontece no navegador de cada usuário.
 - **API da Área do gestor** (opcional): um processo Node 22 com banco SQLite, que recebe **só os totais** das análises e serve o painel gerencial. O banco fica num arquivo da própria VM. Ver a seção 5.
 
+> **Por enquanto a Área do gestor está desligada** (`GESTOR_EM_DESENVOLVIMENTO = true` em `src/main.js`): o botão aparece acinzentado com a dica "Em desenvolvimento" e o site não chama `/api`. Basta publicar o site estático (seções 1 a 4). Para religar, mude para `false`, gere o pacote de novo e instale a API (seção 5).
+
+**Vai para a VM o pacote `dist-vm/`, não a pasta do projeto.** A VM só precisa servir arquivos estáticos: não precisa de Node, git nem do código-fonte. E o repositório do GitHub não tem as planilhas com dados pessoais (ficam fora do git), então um clone na VM não teria as bases das unidades.
+
 O site precisa ser servido em **HTTPS**: o navegador só calcula o SHA-256 do arquivo (usado para não contar o mesmo envio duas vezes) em contexto seguro.
 
 ## 1. Gerar o pacote
 
 Numa máquina com Node 22.13 ou mais novo e a pasta do projeto:
 
-1. **Planilhas das unidades:** coloque-as em `dados/vm/bases/`, uma pasta por unidade e por ferramenta. O passo a passo, os nomes aceitos e o que pedir à coordenação de faturamento estão em [`dados/vm/LEIA-ME.md`](../dados/vm/LEIA-ME.md).
+1. **Planilhas:** a **base geral de profissionais** (todas as unidades, relatório do CNES) vai em `dados/vm/geral/`; Serviço/Classificação e Habilitações vão em `dados/vm/bases/`, uma pasta por unidade e por ferramenta. O passo a passo, os nomes aceitos e o que pedir à coordenação de faturamento estão em [`dados/vm/LEIA-ME.md`](../dados/vm/LEIA-ME.md).
 2. **SIGTAP:** as competências publicadas ficam em `public/sigtap/` (ver a seção 4).
 3. **Build:**
 
@@ -27,11 +31,17 @@ O build lista o que encontrou por unidade e avisa o que falta. Ele para com erro
 
 O resultado fica em `dist-vm/`: a aplicação, as bases SIGTAP e `bases/`, só com as planilhas listadas em `bases/manifest.json`. O modo demonstração não existe nesse build.
 
-> `dist-vm/bases/` contém nome, CPF e CNS de servidores (Profissionais, Carga horária e ADC). Copie a pasta só para a VM, por canal interno. Não publique fora da rede do Estado nem envie para o Netlify.
+> `dist-vm/bases/` contém nome e CNS de servidores (base geral de profissionais, `bases/geral/profissionais.json`, e eventuais planilhas de Profissionais, Carga horária e ADC). Copie a pasta só para a VM, por canal interno. Não publique fora da rede do Estado nem envie para o Netlify.
 
 ## 2. Publicar
 
-Copie o conteúdo de `dist-vm/` para a raiz do site, por exemplo `/var/www/fatura-fhemig`.
+Copie o **conteúdo** de `dist-vm/` (não a pasta em si) para a raiz do site, por exemplo `/var/www/fatura-fhemig`, por canal interno (WinSCP, `scp` ou pasta de rede). Numa atualização, apague o conteúdo antigo antes de copiar: os nomes dos arquivos em `assets/` mudam a cada build.
+
+```bash
+sudo rm -rf /var/www/fatura-fhemig/* && sudo cp -r dist-vm/* /var/www/fatura-fhemig/ && sudo chown -R root:www-data /var/www/fatura-fhemig && sudo chmod -R a+rX,go-w /var/www/fatura-fhemig
+```
+
+(Use o grupo do nginx da distribuição: `www-data` no Ubuntu/Debian, `nginx` no RHEL.)
 
 ### nginx
 

@@ -49,13 +49,15 @@ São as planilhas que ficavam ao lado do `.exe`: Serviço/Classificação, Habil
 | Modo | Origem das bases | Pasta | Uso |
 | --- | --- | --- | --- |
 | `netlify` | Só os dados **simulados** de `../arquivos de teste` | `dados/netlify/` (versionada) | Ambiente de testes, com botões "Modo demonstração" |
-| `vm` | Planilhas reais colocadas em `dados/vm/bases/<ferramenta>/<SIGLA>/` e `dados/vm/bases/checa/` | `dados/vm/` (fora do git, exceto Habilitação e Serviço/Classificação) | VM do Governo de MG |
+| `vm` | Base geral de profissionais em `dados/vm/geral/` e planilhas reais em `dados/vm/bases/<ferramenta>/<SIGLA>/` e `dados/vm/bases/checa/` | `dados/vm/` (fora do git, exceto Habilitação e Serviço/Classificação) | VM do Governo de MG |
 
-No modo `vm`, a pasta `dados/vm/bases/` é a fonte: o tipo de cada planilha sai do nome do arquivo e a unidade, do nome da pasta. O `build:vm` e o `dev:vm` refazem o `bases/manifest.json` sozinhos (`scripts/preparar-vm.mjs`). Unidade nova é só uma pasta nova com a sigla. Regras de nome e lista do que pedir à coordenação: [`dados/vm/LEIA-ME.md`](dados/vm/LEIA-ME.md).
+No modo `vm`, as pastas de `dados/vm/` são a fonte. A **base geral de profissionais** (relatório do CNES com todas as unidades, `.csv` ou `.xlsx`, em `dados/vm/geral/`) vira `bases/geral/profissionais.json` e serve de Profissionais (Hospitalar e Ambulatorial) e Carga horária (Ambulatorial) para cada unidade; o site filtra as linhas da unidade selecionada (`src/engine/comum/base-geral.js`). Nas demais planilhas, o tipo sai do nome do arquivo e a unidade, do nome da pasta. O `build:vm` e o `dev:vm` refazem o `bases/manifest.json` sozinhos (`scripts/preparar-vm.mjs`). Unidade nova é só uma pasta nova com a sigla. Regras de nome e lista do que pedir à coordenação: [`dados/vm/LEIA-ME.md`](dados/vm/LEIA-ME.md).
 
 Habilitação e Serviço/Classificação reais estão versionadas: são cadastro da unidade, sem dados pessoais. Profissionais, Carga horária e ADC têm nome, CPF e CNS de servidores, por isso ficam fora do git, que é público, e nunca vão para o Netlify. Em cada computador novo, copie essas planilhas para `dados/vm/bases/`.
 
 ## Área do gestor (API)
+
+> **Desligada por enquanto:** `GESTOR_EM_DESENVOLVIMENTO = true` em `src/main.js` deixa o botão acinzentado com a dica "Em desenvolvimento" e impede qualquer chamada a `/api`. Mude para `false` para religar.
 
 O painel gerencial lê os totais que as unidades enviam ao fim de cada análise (botão **Enviar ao painel gerencial**). Só vão indicadores, tipos de alerta e procedimentos mais realizados, nunca dados de pacientes ou profissionais. A API fica em `servidor/` (Node 22, Fastify e o SQLite embutido do Node) e roda só na VM. No Netlify não há API, e a Área do gestor mostra o protótipo com dados fictícios.
 

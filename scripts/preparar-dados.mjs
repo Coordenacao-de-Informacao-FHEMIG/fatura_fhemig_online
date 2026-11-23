@@ -16,7 +16,7 @@ const PAI = resolve(RAIZ, '..');
 const TESTE = existsSync(join(RAIZ, 'arquivos de teste')) ? join(RAIZ, 'arquivos de teste') : join(PAI, 'arquivos de teste');
 const modo = process.argv[2] || 'netlify';
 
-if (modo === 'vm') process.exit(prepararVm(join(RAIZ, 'dados', 'vm')) ? 0 : 1);
+if (modo === 'vm') process.exit((await prepararVm(join(RAIZ, 'dados', 'vm'))) ? 0 : 1);
 
 const FONTES = {
   netlify: {

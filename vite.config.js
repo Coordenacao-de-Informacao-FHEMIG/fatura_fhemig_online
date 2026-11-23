@@ -41,7 +41,8 @@ function dadosDoModo() {
       if (!existsSync(manifesto)) throw new Error(`dados/${MODO}/bases/manifest.json não existe. Rode: node scripts/preparar-dados.mjs ${MODO}`);
       // Das bases, vai para o build so o que o manifest lista: um arquivo solto
       // em dados/<modo>/bases (planilha antiga, copia) nunca e publicado.
-      const caminhos = ['bases/manifest.json', ...caminhosDoManifest(JSON.parse(readFileSync(manifesto, 'utf8')))];
+      // Set: a base geral aparece em várias unidades, mas é um arquivo só.
+      const caminhos = [...new Set(['bases/manifest.json', ...caminhosDoManifest(JSON.parse(readFileSync(manifesto, 'utf8')))])];
       for (const rel of caminhos) {
         const destino = join(saida, rel);
         mkdirSync(dirname(destino), { recursive: true });
