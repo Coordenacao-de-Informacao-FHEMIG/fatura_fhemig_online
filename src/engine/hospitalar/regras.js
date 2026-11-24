@@ -119,6 +119,21 @@ export function loadUnitHabilitations(planilha) {
   return codes;
 }
 
+// O CNES tem 7 dígitos. Planilha que guarda o CNES como número perde os zeros
+// à esquerda (0026921 vira 26921); aqui ele volta a ter 7 dígitos.
+export function formatarCnes(valor) {
+  const v = String(valor ?? '').trim();
+  return /^\d{1,6}$/.test(v) ? v.padStart(7, '0') : v;
+}
+
+// Mesmo estabelecimento? Compara só os dígitos, sem os zeros à esquerda:
+// 0026921, 26921 e 00026921 são o mesmo CNES. CNPJ (14 dígitos) segue a mesma regra.
+export function mesmoCnes(a, b) {
+  const chave = (v) => String(v ?? '').replace(/\D/g, '').replace(/^0+/, '');
+  const ca = chave(a);
+  return Boolean(ca) && ca === chave(b);
+}
+
 export function loadUnitServiceClassifications(planilha) {
   const linhas = planilha.abas[planilha.ativa || 0].linhas;
   const headers = (linhas[0] || []).map((v) => normText(pyStrOrEmpty(v)));
@@ -132,7 +147,7 @@ export function loadUnitServiceClassifications(planilha) {
     if (numbers.length < 2) continue;
     const key = `${numbers[0]}-${numbers[1]}`;
     const terceiro = tIdx >= 0 ? normText(pyStrOrEmpty(row[tIdx])) : 'NAO';
-    const cnes = cIdx >= 0 ? formatNumericCode(row[cIdx]) : '';
+    const cnes = cIdx >= 0 ? formatarCnes(formatNumericCode(row[cIdx])) : '';
     const entrada = { terceiro: terceiro.startsWith('SIM') ? 'SIM' : 'NAO', cnes };
     if (!codes.has(key)) codes.set(key, []);
     const lista = codes.get(key);
@@ -179,7 +194,7 @@ export function servicoEstabelecimentoPendente(requiredPairs, unitServiceCodes, 
     for (const e of unitServiceCodes.get(par)) {
       if (e.terceiro !== 'SIM') return 'NAO';
       temTerceiro = true;
-      if (e.cnes && executante && e.cnes === executante) return 'NAO';
+      if (e.cnes && executante && mesmoCnes(e.cnes, executante)) return 'NAO';
     }
   }
   if (temTerceiro && !executante) return 'NAO';
