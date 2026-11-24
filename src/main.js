@@ -4,6 +4,7 @@ import { UNIDADES } from './engine/unidades.js';
 import { extrairEspelhoPdf } from './engine/hospitalar/entrada.js';
 import { FERRAMENTAS, porId } from './ui/ferramentas.js';
 import { renderizarResultado } from './ui/resultados.js';
+import { renderizarInicio } from './ui/inicio.js';
 import { abrirLogin, abrirTrocaSenha, logado, renderizarPainel } from './ui/gestor.js';
 import { api, apiDisponivel, sha256DeArquivos } from './gestao/api.js';
 import { montarResumoGestao } from './gestao/resumo.js';
@@ -126,6 +127,7 @@ function trocarAba(id) {
   $$('[role="tabpanel"]').forEach((p) => {
     p.hidden = p.id !== `painel-${id}`;
   });
+  if (!$('#conteudo').hidden && location.hash !== `#${id}`) history.replaceState(null, '', `#${id}`);
 }
 
 function htmlEntrada(slot) {
@@ -544,28 +546,76 @@ async function usarExemplo(fid, papel) {
 }
 
 // ---------------------------------------------------------------------------
-// Area do gestor (prototipo): alterna entre as ferramentas e o painel
+// Navegação: página inicial, ferramentas e Área do gestor (com o histórico do navegador)
 // ---------------------------------------------------------------------------
-function mostrarGestor(ativo) {
-  $('#conteudo').hidden = ativo;
-  $('#nav-ferramentas').hidden = ativo;
-  $('#seletor-unidade').classList.toggle('invisible', ativo);
-  $('#area-gestor').hidden = !ativo;
-  $('[data-rotulo-gestor]').textContent = ativo ? 'Voltar às ferramentas' : 'Área do gestor';
-  if (ativo) {
-    if (location.hash !== '#gestor') history.replaceState(null, '', '#gestor');
-    renderizarPainel($('#area-gestor'), () => mostrarGestor(false));
-  } else if (location.hash === '#gestor') {
-    history.replaceState(null, '', location.pathname);
-  }
-  scrollTo(0, 0);
-}
-
 // Área do gestor desligada por enquanto (botão acinzentado com a dica "Em desenvolvimento").
 // Para religar: false. Com true, o painel não abre e o resultado não oferece o envio ao painel.
 const GESTOR_EM_DESENVOLVIMENTO = true;
 
-function ligarGestor() {
+function mostrarVista(vista) {
+  $('#inicio').hidden = vista !== 'inicio';
+  $('#conteudo').hidden = vista !== 'ferramentas';
+  $('#nav-ferramentas').hidden = vista !== 'ferramentas';
+  $('#area-gestor').hidden = vista !== 'gestor';
+  $('#seletor-unidade').classList.toggle('invisible', vista === 'gestor');
+  $('[data-rotulo-gestor]').textContent = vista === 'gestor' ? 'Voltar às ferramentas' : 'Área do gestor';
+  scrollTo(0, 0);
+}
+
+function marcarEndereco(hash, empilhar) {
+  if ((location.hash || '') === (hash || '')) return;
+  const url = hash || location.pathname;
+  if (empilhar) history.pushState(null, '', url);
+  else history.replaceState(null, '', url);
+}
+
+function irParaInicio(empilhar = true) {
+  mostrarVista('inicio');
+  marcarEndereco('', empilhar);
+}
+
+function irParaFerramenta(id = estado.aba, empilhar = true) {
+  $('#conteudo').hidden = true; // trocarAba não mexe no endereço; quem marca é marcarEndereco (botão Voltar)
+  trocarAba(porId(id) ? id : estado.aba);
+  mostrarVista('ferramentas');
+  marcarEndereco(`#${estado.aba}`, empilhar);
+}
+
+function mostrarGestor(ativo, empilhar = true) {
+  if (!ativo) return irParaFerramenta(estado.aba, empilhar);
+  mostrarVista('gestor');
+  marcarEndereco('#gestor', empilhar);
+  renderizarPainel($('#area-gestor'), () => mostrarGestor(false));
+}
+
+async function abrirGestor() {
+  if (GESTOR_EM_DESENVOLVIMENTO) {
+    toast('A Área do gestor está em desenvolvimento.');
+    return;
+  }
+  if (await logado()) mostrarGestor(true);
+  else abrirLogin(() => mostrarGestor(true));
+}
+
+// Lê o endereço (#hospitalar, #gestor ou vazio) e mostra a vista certa.
+function seguirEndereco() {
+  const alvo = location.hash.slice(1);
+  if (alvo === 'gestor' && !GESTOR_EM_DESENVOLVIMENTO) {
+    logado().then((u) => (u ? mostrarGestor(true, false) : irParaInicio(false)));
+  } else if (porId(alvo) || alvo === 'conteudo') {
+    // #conteudo vem do link "Ir para o conteúdo" (acessibilidade)
+    irParaFerramenta(porId(alvo) ? alvo : estado.aba, false);
+  } else {
+    irParaInicio(false);
+  }
+}
+
+function ligarNavegacao() {
+  renderizarInicio($('#inicio'), {
+    abrirFerramenta: (id) => irParaFerramenta(id),
+    abrirGestor,
+    gestorEmDesenvolvimento: GESTOR_EM_DESENVOLVIMENTO,
+  });
   const botao = $('#botao-gestor');
   if (GESTOR_EM_DESENVOLVIMENTO) {
     botao.classList.add('em-desenvolvimento');
@@ -573,16 +623,17 @@ function ligarGestor() {
     botao.setAttribute('aria-disabled', 'true');
     botao.removeAttribute('aria-haspopup');
     botao.setAttribute('aria-label', 'Área do gestor (em desenvolvimento)');
-    botao.addEventListener('click', () => toast('A Área do gestor está em desenvolvimento.'));
-    if (location.hash === '#gestor') history.replaceState(null, '', location.pathname);
-    return;
   }
-  botao.addEventListener('click', async () => {
+  botao.addEventListener('click', () => {
     if (!$('#area-gestor').hidden) mostrarGestor(false);
-    else if (await logado()) mostrarGestor(true);
-    else abrirLogin(() => mostrarGestor(true));
+    else abrirGestor();
   });
-  if (location.hash === '#gestor') logado().then((u) => u && mostrarGestor(true));
+  $('#link-inicio').addEventListener('click', (e) => {
+    e.preventDefault();
+    irParaInicio();
+  });
+  window.addEventListener('popstate', seguirEndereco);
+  seguirEndereco();
 }
 
 // ---------------------------------------------------------------------------
@@ -648,7 +699,7 @@ async function iniciar() {
   $('#versao').textContent = `${typeof __VERSAO__ !== 'undefined' ? __VERSAO__ : ''}${DEMO ? ' (ambiente de testes)' : ''}`;
   montarAbas();
   montarPaineis();
-  ligarGestor();
+  ligarNavegacao();
   try {
     estado.manifesto = await chamar('manifesto');
   } catch {
