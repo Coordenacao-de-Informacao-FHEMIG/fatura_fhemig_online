@@ -14,7 +14,8 @@ import { processarHospitalar } from './engine/hospitalar/processar.js';
 import { processarAmbulatorial } from './engine/ambulatorial/processar.js';
 import { processarChecaProfissionais } from './engine/checa/processar.js';
 
-const BASE = new URL(import.meta.env.BASE_URL || '/', self.location.origin);
+// Raiz do site, enviada pela página no nome do worker (funciona também em subpasta).
+const BASE = new URL(self.name || import.meta.env.BASE_URL || '/', self.location.origin);
 const url = (rel) => new URL(rel, BASE).href;
 
 async function baixar(rel) {

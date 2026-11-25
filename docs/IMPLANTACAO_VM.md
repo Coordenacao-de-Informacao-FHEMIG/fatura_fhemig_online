@@ -37,6 +37,8 @@ O resultado fica em `dist-vm/`: a aplicação, as bases SIGTAP e `bases/`, só c
 
 Copie o **conteúdo** de `dist-vm/` (não a pasta em si) para a raiz do site, por exemplo `/var/www/fatura-fhemig`, por canal interno (WinSCP, `scp` ou pasta de rede). Numa atualização, apague o conteúdo antigo antes de copiar: os nomes dos arquivos em `assets/` mudam a cada build.
 
+O site também funciona numa **subpasta** do servidor (por exemplo `http://10.x.x.x/fatura_fhemig/`): todos os caminhos do build são relativos. Abra o endereço com a barra no final (`.../fatura_fhemig/`).
+
 ```bash
 sudo rm -rf /var/www/fatura-fhemig/* && sudo cp -r dist-vm/* /var/www/fatura-fhemig/ && sudo chown -R root:www-data /var/www/fatura-fhemig && sudo chmod -R a+rX,go-w /var/www/fatura-fhemig
 ```

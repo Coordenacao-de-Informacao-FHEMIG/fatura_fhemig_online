@@ -54,6 +54,9 @@ function dadosDoModo() {
 }
 
 export default defineConfig({
+  // Caminhos relativos: o site funciona na raiz do servidor ou numa subpasta
+  // (ex.: http://servidor/fatura_fhemig/). Não use "/..." absoluto no código.
+  base: './',
   plugins: [tailwindcss(), dadosDoModo()],
   define: {
     __MODO__: JSON.stringify(MODO),

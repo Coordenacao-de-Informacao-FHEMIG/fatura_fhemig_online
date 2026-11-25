@@ -45,7 +45,7 @@ export function renderizarInicio(el, { abrirFerramenta, abrirGestor, gestorEmDes
 
   el.innerHTML = `
     <div class="relative isolate overflow-hidden bg-azul-900">
-      <img src="/fotos/centro-cirurgico.webp" alt="" width="1124" height="633" fetchpriority="high"
+      <img src="fotos/centro-cirurgico.webp" alt="" width="1124" height="633" fetchpriority="high"
         class="absolute inset-0 -z-20 size-full object-cover object-[65%_center] opacity-45 mix-blend-luminosity" />
       <div class="absolute inset-0 -z-10 bg-[linear-gradient(100deg,rgb(0_47_71/0.97)_0%,rgb(0_72_108/0.9)_38%,rgb(0_146_195/0.62)_75%,rgb(0_175_210/0.45)_100%)]" aria-hidden="true"></div>
       <div class="mx-auto max-w-7xl px-4 pt-16 pb-20 sm:px-8 sm:pt-24 sm:pb-28 lg:pt-28 lg:pb-32">

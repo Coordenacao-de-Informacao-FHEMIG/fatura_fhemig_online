@@ -12,7 +12,7 @@ class ErroApi extends Error {
 async function requisitar(metodo, caminho, corpo) {
   let r;
   try {
-    r = await fetch(`/api${caminho}`, {
+    r = await fetch(`api${caminho}`, {
       method: metodo,
       credentials: 'same-origin',
       cache: 'no-store',
@@ -30,7 +30,7 @@ async function requisitar(metodo, caminho, corpo) {
 let disponivel = null;
 /** true quando o site roda com a API (VM); false no Netlify/dev sem API. */
 export function apiDisponivel() {
-  disponivel ??= fetch('/api/saude', { cache: 'no-store' })
+  disponivel ??= fetch('api/saude', { cache: 'no-store' })
     .then(async (r) => r.ok && (r.headers.get('content-type') || '').includes('application/json') && (await r.json()).servico === 'fatura-fhemig-api')
     .catch(() => false);
   return disponivel;

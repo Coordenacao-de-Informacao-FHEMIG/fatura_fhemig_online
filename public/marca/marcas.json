@@ -1,4 +1,4 @@
 [
-  { "src": "/marca/sus.svg", "alt": "SUS — Sistema Único de Saúde", "proporcao": 1.93 },
-  { "src": "/marca/governo-mg.svg", "alt": "Governo de Minas Gerais", "proporcao": 6.45 }
+  { "src": "marca/sus.svg", "alt": "SUS — Sistema Único de Saúde", "proporcao": 1.93 },
+  { "src": "marca/governo-mg.svg", "alt": "Governo de Minas Gerais", "proporcao": 6.45 }
 ]

@@ -16,7 +16,7 @@ const DEMO = MODO === 'netlify';
 // ---------------------------------------------------------------------------
 // Worker (motor de processamento)
 // ---------------------------------------------------------------------------
-const worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
+const worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module', name: new URL('.', location.href).href });
 let proxId = 1;
 const pendentes = new Map();
 worker.onmessage = (ev) => {
@@ -79,7 +79,7 @@ function montarUnidades() {
 
 async function montarMarcas() {
   try {
-    const r = await fetch('/marca/marcas.json', { cache: 'no-cache' });
+    const r = await fetch('marca/marcas.json', { cache: 'no-cache' });
     if (!r.ok) return;
     const marcas = await r.json();
     if (!marcas.length) return;
@@ -496,7 +496,7 @@ const ROTULO_DEMO = {
 async function montarDemo() {
   if (!DEMO) return;
   try {
-    const r = await fetch('/exemplos/exemplos.json', { cache: 'no-cache' });
+    const r = await fetch('exemplos/exemplos.json', { cache: 'no-cache' });
     if (!r.ok) return;
     estado.exemplos = await r.json();
   } catch {
@@ -519,7 +519,7 @@ async function montarDemo() {
 }
 
 async function arquivoDoSite(item) {
-  const r = await fetch(`/${item.caminho.split('/').map(encodeURIComponent).join('/')}`);
+  const r = await fetch(`${item.caminho.split('/').map(encodeURIComponent).join('/')}`);
   if (!r.ok) throw new Error(`Exemplo indisponível: ${item.nome}`);
   return new File([await r.blob()], item.nome);
 }
