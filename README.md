@@ -48,14 +48,20 @@ São as planilhas que ficavam ao lado do `.exe`: Serviço/Classificação, Habil
 
 | Modo | Origem das bases | Pasta | Uso |
 | --- | --- | --- | --- |
-| `netlify` | Pacientes e profissionais **simulados** de `arquivos de teste`; Habilitação e Serviço/Classificação **reais** de HJXXIII e HIJPII | `dados/netlify/` (versionada) | Ambiente de testes, com botões "Modo demonstração" |
-| `vm` | Planilhas reais que existem hoje na pasta do projeto, listadas em `scripts/preparar-dados.mjs` | `dados/vm/` (fora do git, exceto Habilitação e Serviço/Classificação) | VM do Governo de MG |
+| `netlify` | Só os dados **simulados** de `../arquivos de teste` | `dados/netlify/` (versionada) | Ambiente de testes, com botões "Modo demonstração" |
+| `vm` | Base geral em `dados/vm/geral/` e planilhas reais em `dados/vm/bases/<ferramenta>/<SIGLA>/` e `dados/vm/bases/checa/` | `dados/vm/` (fora do git, exceto Habilitação e Serviço/Classificação) | VM do Governo de MG |
 
-Habilitação e Serviço/Classificação reais estão versionadas: são cadastro da unidade, sem dados pessoais. Profissionais, Carga horária e ADC têm nome, CPF e CNS de servidores, por isso ficam fora do git, que é público, e nunca vão para o Netlify. Em cada computador novo, copie essas planilhas para `dados/vm/` ou rode `node scripts/preparar-dados.mjs vm`. Para incluir outras unidades, acrescente-as em `scripts/preparar-dados.mjs`, no bloco `vm`.
+No modo `vm`, as pastas de `dados/vm/` são a fonte. A **base geral** (planilha do faturamento com todas as unidades, em `dados/vm/geral/`: abas Serviço/Classificação, Habilitações, Profissionais e CBOs assistenciais) vira `bases/geral/base-geral.json` e `bases/geral/CBO_assistencial.xlsx`. Para cada unidade, ela serve de Serviço/Classificação, Habilitações, Profissionais e Carga horária no Hospitalar e no Ambulatorial; o site filtra as linhas da unidade selecionada (`src/engine/comum/base-geral.js`). Nas planilhas por unidade, o tipo sai do nome do arquivo e a unidade, do nome da pasta. O `build:vm` e o `dev:vm` refazem o `bases/manifest.json` sozinhos (`scripts/preparar-vm.mjs`). Unidade nova é só uma pasta nova com a sigla. Regras de nome e lista do que pedir à coordenação: [`dados/vm/LEIA-ME.md`](dados/vm/LEIA-ME.md).
+
+Habilitação e Serviço/Classificação reais estão versionadas: são cadastro da unidade, sem dados pessoais. Profissionais, Carga horária e ADC têm nome, CPF e CNS de servidores, por isso ficam fora do git, que é público, e nunca vão para o Netlify. Em cada computador novo, copie essas planilhas para `dados/vm/bases/`.
 
 ## Área do gestor (API)
 
+> **Desligada por enquanto:** `GESTOR_EM_DESENVOLVIMENTO = true` em `src/main.js` deixa o botão acinzentado com a dica "Em desenvolvimento" e impede qualquer chamada a `/api`. Mude para `false` para religar.
+
 O painel gerencial lê os totais que as unidades enviam ao fim de cada análise (botão **Enviar ao painel gerencial**). Só vão indicadores, tipos de alerta e procedimentos mais realizados, nunca dados de pacientes ou profissionais. A API fica em `servidor/` (Node 22, Fastify e o SQLite embutido do Node) e roda só na VM. No Netlify não há API, e a Área do gestor mostra o protótipo com dados fictícios.
+
+Com a API, a Área do gestor tem três abas: **Painel**, **Histórico de envios** (filtrado pelas unidades do perfil) e **Usuários** (só admin: cadastro, perfil, unidades, bloqueio e senha temporária). Cada usuário troca a própria senha pelo botão **Trocar senha**.
 
 Para testar localmente:
 
@@ -66,8 +72,6 @@ npm run api:demo
 ```bash
 npm run api:dev
 ```
-
-A Área do gestor (versão beta) tem **alarmes** da competência: unidade sem envio, taxa de AIHs com alerta acima de 10%, alta da taxa, queda de produção, diárias de permanência a maior em alta, BPA com muitos alertas e pendências de cadastro. Os limites ficam em `src/gestao/alarmes.js`. Quem tem perfil de gestão central ou administrador pode usar o seletor **Ver como** para conferir o que o gestor de unidade e o faturista enxergam.
 
 Com `npm run dev` rodando junto, o site encaminha `/api` para a API. O login de teste é `teste@gmail.com` / `teste`. Instalação na VM, usuários, segurança e backup: [docs/IMPLANTACAO_VM.md](docs/IMPLANTACAO_VM.md), seção 5.
 

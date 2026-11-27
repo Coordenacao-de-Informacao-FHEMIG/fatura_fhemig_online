@@ -4,8 +4,8 @@ import { UNIDADES } from './engine/unidades.js';
 import { extrairEspelhoPdf } from './engine/hospitalar/entrada.js';
 import { FERRAMENTAS, porId } from './ui/ferramentas.js';
 import { renderizarResultado } from './ui/resultados.js';
-import { montarInicio } from './ui/inicio.js';
-import { abrirLogin, logado, renderizarPainel } from './ui/gestor.js';
+import { renderizarInicio } from './ui/inicio.js';
+import { abrirLogin, abrirTrocaSenha, logado, renderizarPainel } from './ui/gestor.js';
 import { api, apiDisponivel, sha256DeArquivos } from './gestao/api.js';
 import { montarResumoGestao } from './gestao/resumo.js';
 import { $, $$, esc, toast, tamanho, armazenamento, competencia, ICONES } from './ui/util.js';
@@ -16,7 +16,7 @@ const DEMO = MODO === 'netlify';
 // ---------------------------------------------------------------------------
 // Worker (motor de processamento)
 // ---------------------------------------------------------------------------
-const worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
+const worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module', name: new URL('.', location.href).href });
 let proxId = 1;
 const pendentes = new Map();
 worker.onmessage = (ev) => {
@@ -79,7 +79,7 @@ function montarUnidades() {
 
 async function montarMarcas() {
   try {
-    const r = await fetch('/marca/marcas.json', { cache: 'no-cache' });
+    const r = await fetch('marca/marcas.json', { cache: 'no-cache' });
     if (!r.ok) return;
     const marcas = await r.json();
     if (!marcas.length) return;
@@ -382,7 +382,8 @@ async function slotParaEnvio(fid, slotId, transferir) {
     return { nome: arq.name, bytes };
   }
   const s = baseServidor(fid, slotId);
-  return s ? { nome: s.nome, servidor: s.caminho } : null;
+  // unidade/tabela: só nas entradas da base geral (todas as unidades num arquivo; o worker filtra).
+  return s ? { nome: s.nome, servidor: s.caminho, ...(s.unidade ? { unidade: s.unidade, tabela: s.tabela } : {}) } : null;
 }
 
 async function processar(fid) {
@@ -433,7 +434,7 @@ async function processar(fid) {
     definirEstado(fid, 'Concluído', 'etiqueta-ok');
     await renderizarResultado(painel.querySelector('[data-resultado]'), r, nomeEntrada);
     registrarHistorico(fid, r, nomeEntrada);
-    if (await apiDisponivel()) {
+    if (!GESTOR_EM_DESENVOLVIMENTO && (await apiDisponivel())) {
       const arquivos = fid === 'checa' ? [st.arquivos.tasy, st.arquivos.cnes] : [st.arquivos.entrada];
       sha256DeArquivos(arquivos)
         .then((sha) => oferecerEnvio(painel.querySelector('[data-resultado]'), r, { arquivoNome: nomeEntrada, arquivoSha256: sha, versaoRegras: f.versao || '' }))
@@ -495,7 +496,7 @@ const ROTULO_DEMO = {
 async function montarDemo() {
   if (!DEMO) return;
   try {
-    const r = await fetch('/exemplos/exemplos.json', { cache: 'no-cache' });
+    const r = await fetch('exemplos/exemplos.json', { cache: 'no-cache' });
     if (!r.ok) return;
     estado.exemplos = await r.json();
   } catch {
@@ -512,7 +513,7 @@ async function montarDemo() {
 }
 
 async function arquivoDoSite(item) {
-  const r = await fetch(`/${item.caminho.split('/').map(encodeURIComponent).join('/')}`);
+  const r = await fetch(`${item.caminho.split('/').map(encodeURIComponent).join('/')}`);
   if (!r.ok) throw new Error(`Exemplo indisponível: ${item.nome}`);
   return new File([await r.blob()], item.nome);
 }
@@ -539,8 +540,12 @@ async function usarExemplo(fid, papel) {
 }
 
 // ---------------------------------------------------------------------------
-// Navegacao: pagina inicial, ferramentas e Area do gestor
+// Navegação: página inicial, ferramentas e Área do gestor (com o histórico do navegador)
 // ---------------------------------------------------------------------------
+// Área do gestor desligada por enquanto (botão acinzentado com a dica "Em desenvolvimento").
+// Para religar: false. Com true, o painel não abre e o resultado não oferece o envio ao painel.
+const GESTOR_EM_DESENVOLVIMENTO = true;
+
 function mostrarVista(vista) {
   $('#inicio').hidden = vista !== 'inicio';
   $('#conteudo').hidden = vista !== 'ferramentas';
@@ -551,70 +556,85 @@ function mostrarVista(vista) {
   scrollTo(0, 0);
 }
 
-const navegar = (hash, empilhar) => {
+function marcarEndereco(hash, empilhar) {
   if ((location.hash || '') === (hash || '')) return;
-  const alvo = hash || location.pathname;
-  if (empilhar) history.pushState(null, '', alvo);
-  else history.replaceState(null, '', alvo);
-};
-
-function mostrarInicio(empilhar = true) {
-  mostrarVista('inicio');
-  navegar('', empilhar);
+  const url = hash || location.pathname;
+  if (empilhar) history.pushState(null, '', url);
+  else history.replaceState(null, '', url);
 }
 
-function abrirFerramenta(id = estado.aba, empilhar = true) {
+function irParaInicio(empilhar = true) {
+  mostrarVista('inicio');
+  marcarEndereco('', empilhar);
+}
+
+function irParaFerramenta(id = estado.aba, empilhar = true) {
+  $('#conteudo').hidden = true; // trocarAba não mexe no endereço; quem marca é marcarEndereco (botão Voltar)
+  trocarAba(porId(id) ? id : estado.aba);
   mostrarVista('ferramentas');
-  trocarAba(id);
-  navegar(`#${id}`, empilhar);
+  marcarEndereco(`#${estado.aba}`, empilhar);
 }
 
 function mostrarGestor(ativo, empilhar = true) {
-  if (!ativo) {
-    abrirFerramenta(estado.aba, empilhar);
-    return;
-  }
+  if (!ativo) return irParaFerramenta(estado.aba, empilhar);
   mostrarVista('gestor');
-  navegar('#gestor', empilhar);
+  marcarEndereco('#gestor', empilhar);
   renderizarPainel($('#area-gestor'), () => mostrarGestor(false));
 }
 
-async function entrarNoGestor() {
+async function abrirGestor() {
+  if (GESTOR_EM_DESENVOLVIMENTO) {
+    toast('A Área do gestor está em desenvolvimento.');
+    return;
+  }
   if (await logado()) mostrarGestor(true);
   else abrirLogin(() => mostrarGestor(true));
 }
 
-/** Abre a vista indicada no endereço (#hospitalar, #ambulatorial, #checa, #gestor) ou a página inicial. */
-function rotear() {
-  const h = location.hash.slice(1);
-  if (h === 'gestor') {
-    logado().then((u) => (u ? mostrarGestor(true, false) : mostrarInicio(false)));
-  } else if (porId(h)) {
-    abrirFerramenta(h, false);
+// Lê o endereço (#hospitalar, #gestor ou vazio) e mostra a vista certa.
+function seguirEndereco() {
+  const alvo = location.hash.slice(1);
+  if (alvo === 'gestor' && !GESTOR_EM_DESENVOLVIMENTO) {
+    logado().then((u) => (u ? mostrarGestor(true, false) : irParaInicio(false)));
+  } else if (porId(alvo) || alvo === 'conteudo') {
+    // #conteudo vem do link "Ir para o conteúdo" (acessibilidade)
+    irParaFerramenta(porId(alvo) ? alvo : estado.aba, false);
   } else {
-    mostrarInicio(false);
+    irParaInicio(false);
   }
 }
 
 function ligarNavegacao() {
-  montarInicio($('#inicio'), { abrirFerramenta: (id) => abrirFerramenta(id), abrirGestor: entrarNoGestor });
-  $('#botao-gestor').addEventListener('click', () => {
+  renderizarInicio($('#inicio'), {
+    abrirFerramenta: (id) => irParaFerramenta(id),
+    abrirGestor,
+    gestorEmDesenvolvimento: GESTOR_EM_DESENVOLVIMENTO,
+  });
+  const botao = $('#botao-gestor');
+  if (GESTOR_EM_DESENVOLVIMENTO) {
+    botao.classList.add('em-desenvolvimento');
+    botao.dataset.dica = 'Em desenvolvimento';
+    botao.setAttribute('aria-disabled', 'true');
+    botao.removeAttribute('aria-haspopup');
+    botao.setAttribute('aria-label', 'Área do gestor (em desenvolvimento)');
+  }
+  botao.addEventListener('click', () => {
     if (!$('#area-gestor').hidden) mostrarGestor(false);
-    else entrarNoGestor();
+    else abrirGestor();
   });
   $('#link-inicio').addEventListener('click', (e) => {
     e.preventDefault();
-    mostrarInicio();
+    irParaInicio();
   });
-  window.addEventListener('popstate', rotear);
-  rotear();
+  window.addEventListener('popstate', seguirEndereco);
+  seguirEndereco();
 }
 
 // ---------------------------------------------------------------------------
 // Envio do resumo ao painel gerencial (so com a API da VM; so totais)
 // ---------------------------------------------------------------------------
 async function oferecerEnvio(alvo, r, extra) {
-  if (!(await apiDisponivel())) return;
+  if (GESTOR_EM_DESENVOLVIMENTO || !(await apiDisponivel())) return;
   let resumo;
   try {
     resumo = montarResumoGestao(r, extra);
@@ -640,10 +660,11 @@ async function oferecerEnvio(alvo, r, extra) {
       botao.textContent = 'Enviado';
       toast('Resumo enviado ao painel gerencial.', 'ok');
     } catch (e) {
-      if (e.status === 401) {
+      if (e.status === 401 || e.codigo === 'trocar_senha') {
         botao.disabled = false;
         botao.textContent = 'Enviar ao painel gerencial';
-        abrirLogin(enviar, 'Entre para enviar os totais desta análise ao painel gerencial.');
+        if (e.status === 401) abrirLogin(enviar, 'Entre para enviar os totais desta análise ao painel gerencial.');
+        else if (await abrirTrocaSenha({ obrigatoria: true })) enviar();
         return;
       }
       botao.disabled = false;

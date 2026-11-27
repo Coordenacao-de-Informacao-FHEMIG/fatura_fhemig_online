@@ -7,6 +7,7 @@
 // ExcelJS nao entende e o openpyxl aceita. Este leitor e tolerante a prefixos
 // e roda dentro de Web Worker (sem DOMParser).
 import { unzipSync, strFromU8 } from 'fflate';
+import { sha256Puro } from './sha256.js';
 
 const P = '(?:[A-Za-z_][\\w.-]*:)?';
 const tagRe = (nome, flags = 'g') => new RegExp(`<${P}${nome}\\b([^>]*?)(\\/>|>([\\s\\S]*?)<\\/${P}${nome}>)`, flags);
@@ -168,9 +169,13 @@ export async function lerPlanilha(bytes, nomeArquivo = 'planilha.xlsx') {
   return { abas, ativa: Math.min(ativa, abas.length - 1) };
 }
 
-/** SHA-256 em hexadecimal (Web Crypto, disponivel no navegador e no Node 22). */
+/**
+ * SHA-256 em hexadecimal. Usa o Web Crypto quando existe; em pagina aberta por http://
+ * (fora de HTTPS/localhost) o navegador nao oferece crypto.subtle e o calculo e feito em JS.
+ */
 export async function sha256Hex(bytes) {
   const buf = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
-  const d = await globalThis.crypto.subtle.digest('SHA-256', buf);
-  return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  const subtle = globalThis.crypto?.subtle;
+  const d = subtle ? new Uint8Array(await subtle.digest('SHA-256', buf)) : sha256Puro(buf);
+  return [...d].map((b) => b.toString(16).padStart(2, '0')).join('');
 }

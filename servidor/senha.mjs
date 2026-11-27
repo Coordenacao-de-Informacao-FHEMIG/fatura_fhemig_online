@@ -1,6 +1,6 @@
 // Hash de senha com scrypt (node:crypto, sem dependencia nativa).
 // Formato: scrypt$N$r$p$salt(base64)$hash(base64)
-import { randomBytes, scrypt as scryptCb, timingSafeEqual } from 'node:crypto';
+import { randomBytes, randomInt, scrypt as scryptCb, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 
 const scrypt = promisify(scryptCb);
@@ -28,6 +28,18 @@ export async function conferirSenha(senha, armazenado) {
   const esperado = Buffer.from(hash, 'base64');
   const obtido = await scrypt(String(senha).normalize('NFKC'), Buffer.from(salt, 'base64'), esperado.length, { N: +N, r: +r, p: +p, maxmem: 128 * +N * +r * 2 });
   return timingSafeEqual(esperado, obtido);
+}
+
+// Sem caracteres que se confundem ao ditar ou copiar (0/O, 1/l/I).
+const ALFABETO = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+/** Senha provisoria legivel, no formato xxxx-xxxx-xxxx, sempre com letra e numero. */
+export function gerarSenhaTemporaria() {
+  for (;;) {
+    const blocos = [0, 1, 2].map(() => Array.from({ length: 4 }, () => ALFABETO[randomInt(ALFABETO.length)]).join(''));
+    const senha = blocos.join('-');
+    if (!senhaFraca(senha)) return senha;
+  }
 }
 
 /** Regra minima para senhas locais (quando nao houver AD/SSO). */

@@ -1,8 +1,8 @@
-// Página inicial: o que é o Fatura Fhemig, as três conferências e como usar.
+// Página inicial: apresentação, as três ferramentas, como usar e privacidade.
 import { FERRAMENTAS } from './ferramentas.js';
 import { esc } from './util.js';
 
-const CONTEUDO = {
+const RESUMO = {
   hospitalar: {
     le: 'TXT do SISAIH01 ou PDF do espelho da AIH',
     confere: 'Compatibilidade com o SIGTAP (CBO, idade, sexo, quantidade), habilitação, serviço/classificação, permanência a maior e reinternações em menos de 72 horas.',
@@ -24,19 +24,28 @@ const PASSOS = [
   ['Escolha a unidade', 'No topo da tela. As planilhas de serviço/classificação, habilitação e profissionais da unidade já vêm carregadas.'],
   ['Envie o arquivo de produção', 'Arraste o TXT, o PDF ou as planilhas para a ferramenta. Não é preciso escolher o SIGTAP: ele é selecionado pela competência do arquivo.'],
   ['Clique em Processar', 'A análise roda neste computador, em poucos segundos, e mostra os indicadores e os alertas na tela.'],
-  ['Corrija e baixe o Excel', 'Revise os alertas antes do envio ao SUS e baixe o consolidado. Se a unidade usa o painel gerencial, envie os totais para a gestão.'],
+  ['Corrija e baixe o Excel', 'Revise os alertas antes do envio ao SUS e baixe o consolidado.'],
 ];
 
-const seta = '<svg viewBox="0 0 20 20" fill="currentColor" class="size-4" aria-hidden="true"><path fill-rule="evenodd" d="M3 10a.75.75 0 0 1 .75-.75h10.64l-4.2-3.96a.75.75 0 1 1 1.02-1.1l5.5 5.25a.75.75 0 0 1 0 1.1l-5.5 5.25a.75.75 0 1 1-1.02-1.1l4.2-3.96H3.75A.75.75 0 0 1 3 10Z" clip-rule="evenodd"/></svg>';
-const check = '<svg viewBox="0 0 20 20" fill="currentColor" class="size-4 shrink-0 text-turquesa-claro" aria-hidden="true"><path fill-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0l-3.5-3.5a1 1 0 1 1 1.4-1.4l2.8 2.8 6.8-6.8a1 1 0 0 1 1.4 0Z" clip-rule="evenodd"/></svg>';
-const cadeado = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="size-6" aria-hidden="true"><rect x="4" y="10.5" width="16" height="10" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg>';
-const grafico = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="size-6" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>';
+const SETA = '<svg viewBox="0 0 20 20" fill="currentColor" class="size-4" aria-hidden="true"><path fill-rule="evenodd" d="M3 10a.75.75 0 0 1 .75-.75h10.64l-4.2-3.96a.75.75 0 1 1 1.02-1.1l5.5 5.25a.75.75 0 0 1 0 1.1l-5.5 5.25a.75.75 0 1 1-1.02-1.1l4.2-3.96H3.75A.75.75 0 0 1 3 10Z" clip-rule="evenodd"/></svg>';
+const CHECK = '<svg viewBox="0 0 20 20" fill="currentColor" class="size-4 shrink-0 text-turquesa-claro" aria-hidden="true"><path fill-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0l-3.5-3.5a1 1 0 1 1 1.4-1.4l2.8 2.8 6.8-6.8a1 1 0 0 1 1.4 0Z" clip-rule="evenodd"/></svg>';
+const CADEADO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="size-6" aria-hidden="true"><rect x="4" y="10.5" width="16" height="10" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg>';
+const GRAFICO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="size-6" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>';
 
-/** opcoes: { abrirFerramenta(id), abrirGestor() } */
-export function montarInicio(alvo, { abrirFerramenta, abrirGestor }) {
-  alvo.innerHTML = `
+/**
+ * Monta a página inicial em `el`.
+ * - abrirFerramenta(id?): abre a ferramenta (sem id, a última usada).
+ * - abrirGestor(): abre a Área do gestor.
+ * - gestorEmDesenvolvimento: deixa o botão da Área do gestor acinzentado, com a dica.
+ */
+export function renderizarInicio(el, { abrirFerramenta, abrirGestor, gestorEmDesenvolvimento = false }) {
+  const botaoGestor = gestorEmDesenvolvimento
+    ? '<button type="button" class="btn-sutil em-desenvolvimento mt-3 -ml-2" data-gestor data-dica="Em desenvolvimento" aria-disabled="true" aria-label="Área do gestor (em desenvolvimento)">Área do gestor em desenvolvimento</button>'
+    : `<button type="button" class="btn-sutil mt-3 -ml-2 text-turquesa-700" data-gestor>Abrir a Área do gestor ${SETA}</button>`;
+
+  el.innerHTML = `
     <div class="relative isolate overflow-hidden bg-azul-900">
-      <img src="/fotos/centro-cirurgico.webp" alt="" width="1124" height="633" fetchpriority="high"
+      <img src="fotos/centro-cirurgico.webp" alt="" width="1124" height="633" fetchpriority="high"
         class="absolute inset-0 -z-20 size-full object-cover object-[65%_center] opacity-45 mix-blend-luminosity" />
       <div class="absolute inset-0 -z-10 bg-[linear-gradient(100deg,rgb(0_47_71/0.97)_0%,rgb(0_72_108/0.9)_38%,rgb(0_146_195/0.62)_75%,rgb(0_175_210/0.45)_100%)]" aria-hidden="true"></div>
       <div class="mx-auto max-w-7xl px-4 pt-16 pb-20 sm:px-8 sm:pt-24 sm:pb-28 lg:pt-28 lg:pb-32">
@@ -47,13 +56,13 @@ export function montarInicio(alvo, { abrirFerramenta, abrirGestor }) {
           O sistema aponta o que pode virar glosa, conta por conta, e entrega o consolidado em Excel.
         </p>
         <div class="mt-9 flex flex-wrap gap-3">
-          <button type="button" class="btn h-11 bg-white px-6 text-[15px] text-azul shadow-lg shadow-azul-900/30 hover:bg-turquesa-50" data-comecar>Começar análise ${seta}</button>
+          <button type="button" class="btn h-11 bg-white px-6 text-[15px] text-azul shadow-lg shadow-azul-900/30 hover:bg-turquesa-50" data-comecar>Começar análise ${SETA}</button>
           <a href="#como-usar" class="btn h-11 border border-white/40 px-6 text-[15px] text-white hover:bg-white/10">Como funciona</a>
         </div>
         <ul class="mt-12 flex flex-col gap-3 text-sm text-white/85 sm:flex-row sm:flex-wrap sm:gap-x-8">
-          <li class="flex items-center gap-2">${check}Sem instalar nada</li>
-          <li class="flex items-center gap-2">${check}Os arquivos não saem do seu computador</li>
-          <li class="flex items-center gap-2">${check}SIGTAP e planilhas da unidade automáticos</li>
+          <li class="flex items-center gap-2">${CHECK}Sem instalar nada</li>
+          <li class="flex items-center gap-2">${CHECK}Os arquivos não saem do seu computador</li>
+          <li class="flex items-center gap-2">${CHECK}SIGTAP e planilhas da unidade automáticos</li>
         </ul>
       </div>
     </div>
@@ -66,18 +75,18 @@ export function montarInicio(alvo, { abrirFerramenta, abrirGestor }) {
         </div>
         <div class="mt-10 grid grid-cols-1 gap-5 lg:grid-cols-3">
           ${FERRAMENTAS.map((f) => {
-            const c = CONTEUDO[f.id];
+            const r = RESUMO[f.id] || {};
             return `<article class="cartao flex flex-col p-6">
               <div class="flex items-center gap-3">
                 <span class="grid size-11 place-items-center rounded-lg bg-turquesa-50 text-turquesa-700">${f.icone}</span>
                 <h3 class="text-[19px]">${esc(f.titulo)}</h3>
               </div>
               <dl class="mt-5 flex-1 space-y-3 text-sm">
-                <div><dt class="font-semibold text-tinta">Lê</dt><dd class="text-suave">${esc(c.le)}</dd></div>
-                <div><dt class="font-semibold text-tinta">Confere</dt><dd class="text-suave">${esc(c.confere)}</dd></div>
-                <div><dt class="font-semibold text-tinta">Entrega</dt><dd class="text-suave">${esc(c.entrega)}</dd></div>
+                <div><dt class="font-semibold text-tinta">Lê</dt><dd class="text-suave">${esc(r.le)}</dd></div>
+                <div><dt class="font-semibold text-tinta">Confere</dt><dd class="text-suave">${esc(r.confere)}</dd></div>
+                <div><dt class="font-semibold text-tinta">Entrega</dt><dd class="text-suave">${esc(r.entrega)}</dd></div>
               </dl>
-              <button type="button" class="btn-secundario mt-6 self-start" data-abrir="${esc(f.id)}">Abrir ${esc(f.titulo)} ${seta}</button>
+              <button type="button" class="btn-secundario mt-6 self-start" data-abrir="${esc(f.id)}">Abrir ${esc(f.titulo)} ${SETA}</button>
             </article>`;
           }).join('')}
         </div>
@@ -99,28 +108,28 @@ export function montarInicio(alvo, { abrirFerramenta, abrirGestor }) {
 
       <section class="grid grid-cols-1 gap-5 border-t border-linha py-16 sm:py-20 lg:grid-cols-2" aria-label="Privacidade e acompanhamento">
         <div class="cartao flex gap-4 p-6">
-          <span class="grid size-11 shrink-0 place-items-center rounded-lg bg-ok-50 text-ok">${cadeado}</span>
+          <span class="grid size-11 shrink-0 place-items-center rounded-lg bg-ok-50 text-ok">${CADEADO}</span>
           <div>
             <h3 class="text-[17px]">Os dados dos pacientes ficam com você</h3>
             <p class="mt-2 text-sm text-suave">A análise acontece neste computador. Nenhum arquivo de produção é enviado pela internet, e o histórico guarda só o nome do arquivo e os totais.</p>
           </div>
         </div>
         <div class="cartao flex gap-4 p-6">
-          <span class="grid size-11 shrink-0 place-items-center rounded-lg bg-turquesa-50 text-turquesa-700">${grafico}</span>
+          <span class="grid size-11 shrink-0 place-items-center rounded-lg bg-turquesa-50 text-turquesa-700">${GRAFICO}</span>
           <div>
             <h3 class="text-[17px]">Acompanhamento da gestão</h3>
             <p class="mt-2 text-sm text-suave">Na Área do gestor, a gestão acompanha a produção e a qualidade do faturamento das unidades mês a mês, com alarmes do que precisa de atenção.</p>
-            <button type="button" class="btn-sutil mt-3 -ml-2 text-turquesa-700" data-gestor>Abrir a Área do gestor ${seta}</button>
+            ${botaoGestor}
           </div>
         </div>
       </section>
     </div>`;
 
-  alvo.querySelector('[data-comecar]').addEventListener('click', () => abrirFerramenta());
-  alvo.querySelectorAll('[data-abrir]').forEach((b) => b.addEventListener('click', () => abrirFerramenta(b.dataset.abrir)));
-  alvo.querySelector('[data-gestor]').addEventListener('click', abrirGestor);
-  alvo.querySelector('a[href="#como-usar"]').addEventListener('click', (e) => {
+  el.querySelector('[data-comecar]').addEventListener('click', () => abrirFerramenta());
+  el.querySelectorAll('[data-abrir]').forEach((b) => b.addEventListener('click', () => abrirFerramenta(b.dataset.abrir)));
+  el.querySelector('[data-gestor]').addEventListener('click', () => abrirGestor());
+  el.querySelector('a[href="#como-usar"]').addEventListener('click', (e) => {
     e.preventDefault();
-    alvo.querySelector('#como-usar').scrollIntoView({ behavior: 'smooth' });
+    el.querySelector('#como-usar').scrollIntoView({ behavior: 'smooth' });
   });
 }

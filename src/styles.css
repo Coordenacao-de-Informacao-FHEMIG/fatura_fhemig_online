@@ -159,5 +159,33 @@
   * { transition: none !important; animation: none !important; }
 }
 
+/* Recurso desligado por enquanto: acinzentado, com dica ao passar o mouse (ou focar pelo teclado). */
+/* Sem opacity/filter no botão: a dica (::after) herdaria o esmaecimento. */
+.em-desenvolvimento,
+.em-desenvolvimento:hover,
+.em-desenvolvimento:active {
+  position: relative;
+  cursor: not-allowed;
+  color: var(--color-apagado);
+  background: var(--color-fundo);
+  border-color: var(--color-linha);
+}
+.em-desenvolvimento[data-dica]:hover::after,
+.em-desenvolvimento[data-dica]:focus-visible::after {
+  content: attr(data-dica);
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  white-space: nowrap;
+  border-radius: 6px;
+  background: var(--color-azul-900);
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.18);
+}
+
 .girando { animation: girar 0.9s linear infinite; }
 @keyframes girar { to { transform: rotate(360deg); } }

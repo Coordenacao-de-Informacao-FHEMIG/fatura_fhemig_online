@@ -3,13 +3,20 @@
 //   FATURA_MODO=vm: publica as bases reais das unidades (dados/vm), sem exemplos.
 import { defineConfig } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
-import { cpSync, existsSync, createReadStream, statSync } from 'node:fs';
-import { join, resolve, normalize } from 'node:path';
+import { cpSync, existsSync, createReadStream, statSync, readFileSync, mkdirSync } from 'node:fs';
+import { join, resolve, normalize, dirname } from 'node:path';
 import { CABECALHOS_SEGURANCA } from './seguranca.js';
 
 const RAIZ = import.meta.dirname;
 const MODO = process.env.FATURA_MODO || 'netlify';
 const DADOS = resolve(RAIZ, 'dados', MODO);
+
+/** Todos os "caminho" do bases/manifest.json (hospitalar, ambulatorial e checa). */
+function caminhosDoManifest(no) {
+  if (!no || typeof no !== 'object') return [];
+  if (typeof no.caminho === 'string') return [no.caminho];
+  return Object.values(no).flatMap(caminhosDoManifest);
+}
 
 /** Serve /bases e /exemplos de dados/<modo> no dev e copia para a saida no build. */
 function dadosDoModo() {
@@ -30,15 +37,26 @@ function dadosDoModo() {
       });
     },
     closeBundle() {
-      if (!existsSync(DADOS)) throw new Error(`dados/${MODO} não existe. Rode: node scripts/preparar-dados.mjs ${MODO}`);
-      for (const pasta of ['bases', 'exemplos']) {
-        if (existsSync(join(DADOS, pasta))) cpSync(join(DADOS, pasta), join(saida, pasta), { recursive: true });
+      const manifesto = join(DADOS, 'bases', 'manifest.json');
+      if (!existsSync(manifesto)) throw new Error(`dados/${MODO}/bases/manifest.json não existe. Rode: node scripts/preparar-dados.mjs ${MODO}`);
+      // Das bases, vai para o build so o que o manifest lista: um arquivo solto
+      // em dados/<modo>/bases (planilha antiga, copia) nunca e publicado.
+      // Set: a base geral aparece em várias unidades, mas é um arquivo só.
+      const caminhos = [...new Set(['bases/manifest.json', ...caminhosDoManifest(JSON.parse(readFileSync(manifesto, 'utf8')))])];
+      for (const rel of caminhos) {
+        const destino = join(saida, rel);
+        mkdirSync(dirname(destino), { recursive: true });
+        cpSync(join(DADOS, rel), destino);
       }
+      if (existsSync(join(DADOS, 'exemplos'))) cpSync(join(DADOS, 'exemplos'), join(saida, 'exemplos'), { recursive: true });
     },
   };
 }
 
 export default defineConfig({
+  // Caminhos relativos: o site funciona na raiz do servidor ou numa subpasta
+  // (ex.: http://servidor/fatura_fhemig/). Não use "/..." absoluto no código.
+  base: './',
   plugins: [tailwindcss(), dadosDoModo()],
   define: {
     __MODO__: JSON.stringify(MODO),

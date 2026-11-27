@@ -1,6 +1,7 @@
 // Administracao da API pela linha de comando (na VM). Exemplos:
 //   npm run api:cli -- usuario:criar --email maria@fhemig.mg.gov.br --nome "Maria" --perfil gestor_unidade --unidades HJXXIII,HIJPII
 //   npm run api:cli -- usuario:senha --email maria@fhemig.mg.gov.br
+//   npm run api:cli -- usuario:senha --email maria@fhemig.mg.gov.br --temporaria   (gera senha provisória; troca obrigatória no login)
 //   npm run api:cli -- usuario:desativar --email maria@fhemig.mg.gov.br
 //   npm run api:cli -- usuario:listar
 //   npm run api:cli -- auditoria
@@ -10,14 +11,17 @@ import { parseArgs } from 'node:util';
 import { createInterface } from 'node:readline';
 import { abrirBanco } from './banco.mjs';
 import { lerConfig } from './config.mjs';
-import { gerarHash, senhaFraca } from './senha.mjs';
+import { gerarHash, gerarSenhaTemporaria, senhaFraca } from './senha.mjs';
 import { gerarResumosFicticios } from '../src/gestao/ficticio.js';
 
 const PERFIS = ['faturista', 'gestor_unidade', 'gestor_central', 'admin'];
 const [comando, ...resto] = process.argv.slice(2);
 const { values: op } = parseArgs({
   args: resto,
-  options: { email: { type: 'string' }, nome: { type: 'string' }, perfil: { type: 'string' }, unidades: { type: 'string' }, n: { type: 'string' } },
+  options: {
+    email: { type: 'string' }, nome: { type: 'string' }, perfil: { type: 'string' }, unidades: { type: 'string' }, n: { type: 'string' },
+    temporaria: { type: 'boolean' },
+  },
 });
 
 function falhar(msg) {
@@ -64,7 +68,18 @@ switch (comando) {
   case 'usuario:senha': {
     const u = email && banco.usuarioPorEmail(email);
     if (!u) falhar('usuário não encontrado.');
-    banco.atualizarSenha(u.id, await novaSenha());
+    if (op.temporaria) {
+      const senha = gerarSenhaTemporaria();
+      const expira = new Date(Date.now() + cfg.horasSenhaTemporaria * 3600e3);
+      banco.definirSenha(u.id, await gerarHash(senha), { temporaria: true, expiraEm: expira });
+      banco.encerrarSessoesDoUsuario(u.id);
+      banco.auditar(null, 'cli_senha_temporaria', { email });
+      console.log(`Senha temporária de ${email}: ${senha}`);
+      console.log(`Vale até ${expira.toLocaleString('pt-BR')}. No próximo login o usuário será obrigado a definir uma nova senha.`);
+      break;
+    }
+    banco.definirSenha(u.id, await novaSenha());
+    banco.encerrarSessoesDoUsuario(u.id);
     banco.auditar(null, 'cli_senha_alterada', { email });
     console.log(`Senha de ${email} alterada.`);
     break;

@@ -11,6 +11,7 @@ export function lerConfig(env = process.env) {
     porta: Number(env.FATURA_PORTA || 3001),
     cookieSeguro: env.FATURA_COOKIE_SEGURO !== '0',
     horasSessao: Number(env.FATURA_HORAS_SESSAO || 8),
+    horasSenhaTemporaria: Number(env.FATURA_SENHA_TEMP_HORAS || 72),
     origens: lista(env.FATURA_ORIGENS),
     confiarProxy: env.FATURA_CONFIAR_PROXY === '1',
     log: env.FATURA_LOG !== '0',

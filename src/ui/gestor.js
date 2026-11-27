@@ -5,17 +5,17 @@
 //    guardados no SQLite da VM (servidor/). Ver docs/ARQUITETURA_GESTAO.md.
 //  - Protótipo (Netlify, ou sem API): login de teste e dados FICTÍCIOS gerados no navegador.
 import { desenharGrafico } from './resultados.js';
-import { $, esc, numero, armazenamento, toast } from './util.js';
+import { $, esc, numero, armazenamento, toast, competencia } from './util.js';
+import { PERFIS, renderizarUsuarios, dataHora } from './admin.js';
 import { api, apiDisponivel } from '../gestao/api.js';
 import { gerarResumosFicticios, MESES_FICTICIOS } from '../gestao/ficticio.js';
 import { janelaCompetencias, montarPainel } from '../gestao/painel.js';
 import { UNIDADES } from '../engine/unidades.js';
-import { calcularAlarmes } from '../gestao/alarmes.js';
 
 // Credenciais apenas para o protótipo (dados fictícios; nada a proteger).
-const USUARIO_TESTE = { email: 'teste@gmail.com', senha: 'teste', nome: 'Gestor FHEMIG' };
+const USUARIO_TESTE = { email: 'teste@gmail.com', senha: 'teste', nome: 'Gestor de teste' };
 const CHAVE_SESSAO = 'fatura.gestor.sessao';
-const PERFIS = { faturista: 'Faturista', gestor_unidade: 'Gestor de unidade', gestor_central: 'Gestão central', admin: 'Administrador' };
+const NOME_FERRAMENTA = { hospitalar: 'Hospitalar', ambulatorial: 'Ambulatorial', checa: 'ChecaProfissionais' };
 
 const nomeMes = (c) => `${['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'][+c.slice(4) - 1]}/${c.slice(2, 4)}`;
 
@@ -80,6 +80,7 @@ export async function logado() {
 // Login
 // ---------------------------------------------------------------------------
 export async function abrirLogin(aoEntrar, motivo = '') {
+  const real_ = await apiDisponivel();
   const d = $('#dialogo-gestor');
   d.innerHTML = `<form method="dialog" class="bg-white p-6 sm:p-8" novalidate>
     <div class="flex items-start justify-between gap-4">
@@ -89,7 +90,10 @@ export async function abrirLogin(aoEntrar, motivo = '') {
       </div>
       <button type="button" class="btn-sutil text-suave" data-fechar aria-label="Fechar">✕</button>
     </div>
-    <p class="mt-5 rounded-lg border border-linha bg-fundo px-4 py-3 text-[13px] text-suave">Entre com o e-mail e a senha cadastrados pela administração do sistema. <span class="font-semibold text-turquesa-700">Versão beta.</span></p>
+    ${real_ || !PROTOTIPO_PERMITIDO
+      ? '<p class="mt-5 rounded-lg border border-linha bg-fundo px-4 py-3 text-[13px] text-suave">Entre com o e-mail e a senha cadastrados pela administração do sistema.</p>'
+      : `<div class="mt-5 rounded-lg border border-aviso/20 bg-aviso-50 px-4 py-3 text-[13px] text-aviso">
+          <strong>Protótipo.</strong> Login de demonstração e dados fictícios. Use <strong>teste@gmail.com</strong> e a senha <strong>teste</strong>.</div>`}
     <div class="mt-6 space-y-4">
       <label class="block"><span class="rotulo">E-mail</span>
         <input type="email" class="campo mt-1" name="email" autocomplete="username" required maxlength="200" /></label>
@@ -104,14 +108,17 @@ export async function abrirLogin(aoEntrar, motivo = '') {
   </form>`;
   const form = d.querySelector('form');
   const erro = d.querySelector('[data-erro]');
+  d.oncancel = null;
   d.querySelectorAll('[data-fechar]').forEach((b) => b.addEventListener('click', () => d.close()));
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const botao = d.querySelector('[data-entrar]');
     botao.disabled = true;
     try {
-      await (await fonte()).entrar(form.email.value.trim().toLowerCase(), form.senha.value);
+      const r = await (await fonte()).entrar(form.email.value.trim().toLowerCase(), form.senha.value);
       d.close();
+      // Senha temporária: só segue depois de definir a nova.
+      if (r?.usuario?.trocar_senha && !(await abrirTrocaSenha({ obrigatoria: true }))) return;
       aoEntrar();
     } catch (falha) {
       erro.textContent = falha.message;
@@ -123,6 +130,87 @@ export async function abrirLogin(aoEntrar, motivo = '') {
   });
   d.showModal();
   form.email.focus();
+}
+
+// ---------------------------------------------------------------------------
+// Troca de senha (só com a API)
+// ---------------------------------------------------------------------------
+/** Mesma regra de servidor/senha.mjs (a API confere de novo). */
+function problemaNaSenha(senha) {
+  if (senha.length < 10) return 'A senha precisa ter pelo menos 10 caracteres.';
+  if (!/[a-zA-Z]/.test(senha) || !/\d/.test(senha)) return 'A senha precisa ter letras e números.';
+  return null;
+}
+
+/**
+ * Diálogo de troca de senha. Obrigatória (depois de senha temporária): não fecha; a alternativa é sair.
+ * Resolve true quando a senha foi trocada.
+ */
+export function abrirTrocaSenha({ obrigatoria = false } = {}) {
+  const d = $('#dialogo-gestor');
+  d.innerHTML = `<form method="dialog" class="bg-white p-6 sm:p-8" novalidate>
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <h2 class="text-[22px]">${obrigatoria ? 'Defina sua nova senha' : 'Trocar senha'}</h2>
+        <p class="mt-1 text-sm text-suave">${obrigatoria
+          ? 'Você entrou com uma senha temporária. Para continuar, escolha uma senha só sua.'
+          : 'As outras sessões abertas com a sua conta serão encerradas.'}</p>
+      </div>
+      ${obrigatoria ? '' : '<button type="button" class="btn-sutil text-suave" data-fechar aria-label="Fechar">✕</button>'}
+    </div>
+    <div class="mt-6 space-y-4">
+      <label class="block"><span class="rotulo">${obrigatoria ? 'Senha temporária' : 'Senha atual'}</span>
+        <input type="password" class="campo mt-1" name="atual" autocomplete="current-password" required maxlength="200" /></label>
+      <label class="block"><span class="rotulo">Nova senha</span>
+        <input type="password" class="campo mt-1" name="nova" autocomplete="new-password" required maxlength="200" /></label>
+      <label class="block"><span class="rotulo">Repita a nova senha</span>
+        <input type="password" class="campo mt-1" name="repetir" autocomplete="new-password" required maxlength="200" /></label>
+      <p class="text-[13px] text-apagado">Pelo menos 10 caracteres, com letras e números.</p>
+      <p class="hidden text-sm font-semibold text-alerta" data-erro role="alert"></p>
+    </div>
+    <div class="mt-7 flex justify-end gap-2">
+      <button type="button" class="btn-secundario" data-fechar>${obrigatoria ? 'Sair' : 'Cancelar'}</button>
+      <button type="submit" class="btn-primario px-6" data-salvar>Salvar senha</button>
+    </div>
+  </form>`;
+  const form = d.querySelector('form');
+  const erro = d.querySelector('[data-erro]');
+  const mostrarErro = (msg) => {
+    erro.textContent = msg;
+    erro.classList.remove('hidden');
+  };
+  return new Promise((resolver) => {
+    let trocou = false;
+    d.oncancel = obrigatoria ? (e) => e.preventDefault() : null;
+    d.addEventListener('close', () => resolver(trocou), { once: true });
+    d.querySelectorAll('[data-fechar]').forEach((b) => b.addEventListener('click', async () => {
+      if (obrigatoria) {
+        await api.sair().catch(() => {});
+        toast('Sessão encerrada. A senha temporária continua valendo até o prazo.');
+      }
+      d.close();
+    }));
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nova = form.nova.value;
+      const problema = problemaNaSenha(nova) || (nova !== form.repetir.value ? 'As duas senhas novas não conferem.' : null);
+      if (problema) return mostrarErro(problema);
+      const botao = d.querySelector('[data-salvar]');
+      botao.disabled = true;
+      try {
+        await api.trocarSenha(form.atual.value, nova);
+        trocou = true;
+        toast('Senha alterada.', 'ok');
+        d.close();
+      } catch (falha) {
+        mostrarErro(falha.message);
+      } finally {
+        botao.disabled = false;
+      }
+    });
+    d.showModal();
+    form.atual.focus();
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -192,95 +280,73 @@ const vazioHtml = (titulo, texto) => `<div class="cartao px-6 py-12 text-center"
   <p class="display text-[17px] font-bold text-azul">${esc(titulo)}</p>
   <p class="mx-auto mt-2 max-w-xl text-sm text-suave">${esc(texto)}</p></div>`;
 
-function htmlAlarmes(alarmes, mes) {
-  const criticos = alarmes.filter((x) => x.nivel === 'critico').length;
-  const atencao = alarmes.length - criticos;
-  const item = (x) => `<li class="flex items-start gap-3 py-3">
-      <span class="mt-1.5 size-2.5 shrink-0 rounded-full ${x.nivel === 'critico' ? 'bg-alerta' : 'bg-aviso'}" aria-hidden="true"></span>
-      <div class="min-w-0 flex-1">
-        <p class="text-sm"><button type="button" class="font-semibold text-turquesa-700 hover:underline" data-unidade="${esc(x.sigla)}">${esc(x.sigla)}</button> · <strong class="text-tinta">${esc(x.titulo)}</strong></p>
-        <p class="mt-0.5 text-[13px] text-suave">${esc(x.detalhe)}</p>
-      </div>
-      <span class="etiqueta ${x.nivel === 'critico' ? 'etiqueta-pendente' : 'etiqueta-neutra'}">${x.nivel === 'critico' ? 'Crítico' : 'Atenção'}</span>
-    </li>`;
-  const visiveis = alarmes.slice(0, 6);
-  const resto = alarmes.slice(6);
-  return `<section class="cartao p-6" aria-labelledby="alarmes-titulo">
-    <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-      <h3 id="alarmes-titulo" class="display text-[15px] font-bold">Alarmes de ${esc(nomeMes(mes))}</h3>
-      <p class="text-[13px] text-suave">${alarmes.length
-        ? [criticos ? `<span class="font-semibold text-alerta">${criticos} ${criticos === 1 ? 'crítico' : 'críticos'}</span>` : '', atencao ? `${atencao} de atenção` : ''].filter(Boolean).join(' · ')
-        : 'Nenhuma situação fora dos limites'}</p>
-    </div>
-    ${alarmes.length
-      ? `<ul class="mt-2 divide-y divide-linha">${visiveis.map(item).join('')}</ul>
-         ${resto.length ? `<details><summary class="cursor-pointer py-2 text-[13px] font-semibold text-turquesa-700">Ver mais ${resto.length}</summary><ul class="divide-y divide-linha">${resto.map(item).join('')}</ul></details>` : ''}`
-      : '<p class="mt-3 text-sm text-suave">Taxas de alerta, envios, produção e cadastro de profissionais dentro do esperado nesta competência.</p>'}
+/** Resumo de uma linha do histórico, a partir dos indicadores do envio. */
+function resultadoDoEnvio(e) {
+  const i = e.indicadores || {};
+  if (e.ferramenta === 'hospitalar') return `${numero(i.aihs_distintas || 0)} AIHs · ${numero(i.aihs_com_alerta || 0)} com alerta`;
+  if (e.ferramenta === 'ambulatorial') return `${numero(i.linhas_de_atendimento || 0)} linhas · ${numero(i.linhas_com_alerta || 0)} com alerta`;
+  const pend = (i.nao_encontrados_no_cnes || 0) + (i.nao_encontrados_no_tasy || 0) + (i.pessoas_com_cbos_diferentes || 0);
+  return `${numero(pend)} pendências cadastrais`;
+}
+
+function tabelaHistorico(envios) {
+  if (!envios.length) return vazioHtml('Nenhum envio encontrado', 'Ainda não há análises enviadas ao painel para este filtro.');
+  return `<section class="cartao p-6">
+    <h3 class="display mb-1 text-[15px] font-bold">Histórico de envios</h3>
+    <p class="mb-5 text-[13px] text-suave">Cada linha é uma análise enviada ao painel. Quando a unidade reenvia a mesma competência e ferramenta, o envio novo passa a valer e o anterior fica como substituído. Mostra os ${numero(envios.length)} envios mais recentes.</p>
+    <div class="overflow-x-auto rounded-lg border border-linha"><table class="tabela">
+      <thead><tr><th>Enviado em</th><th>Unidade</th><th>Ferramenta</th><th>Competência</th><th>Resultado</th><th class="text-right">Tipos de alerta</th><th>Enviado por</th><th>Situação</th></tr></thead>
+      <tbody>${envios.map((e) => `<tr>
+        <td class="whitespace-nowrap tabular-nums">${esc(dataHora(e.criado_em))}${e.arquivo_nome ? `<span class="block max-w-56 truncate text-xs text-apagado" title="${esc(e.arquivo_nome)}">${esc(e.arquivo_nome)}</span>` : ''}</td>
+        <td class="font-semibold">${esc(e.sigla)}</td>
+        <td>${esc(NOME_FERRAMENTA[e.ferramenta] || e.ferramenta)}</td>
+        <td class="tabular-nums">${esc(competencia(e.competencia))}</td>
+        <td class="text-[13px]">${esc(resultadoDoEnvio(e))}</td>
+        <td class="text-right tabular-nums">${numero(e.tipos_alerta || 0)}</td>
+        <td class="text-[13px]">${esc(e.enviado_por || '—')}</td>
+        <td>${e.vigente ? '<span class="etiqueta etiqueta-ok">Vigente</span>' : '<span class="etiqueta etiqueta-neutra">Substituído</span>'}</td></tr>`).join('')}</tbody>
+    </table></div>
   </section>`;
 }
 
 export async function renderizarPainel(alvo, aoSair) {
   const f = await fonte();
+  const real_ = f === real;
   let usuario = await f.sessao().catch(() => null);
   if (!usuario) {
     aoSair();
     return;
   }
-  let painelBase = null;
+  // Sessão aberta com senha temporária (ex.: recarregou a página antes de trocar).
+  if (real_ && usuario.trocar_senha && !(await abrirTrocaSenha({ obrigatoria: true }))) {
+    aoSair();
+    return;
+  }
+  let painel = null;
   let unidade = '';
-  // Simulação de perfil (só para quem vê todas as unidades): '' = perfil real, 'gestor_unidade' ou 'faturista'.
-  let simulacao = '';
-  const podeSimular = ['gestor_central', 'admin'].includes(usuario.perfil);
+  let aba = 'painel';
+  let ferramenta = '';
+  const abas = real_
+    ? [['painel', 'Painel'], ['historico', 'Histórico de envios'], ...(usuario.perfil === 'admin' ? [['usuarios', 'Usuários']] : [])]
+    : [];
 
-  /** O painel como o perfil simulado o veria (o gestor de unidade só enxerga a própria unidade). */
-  const visao = () => {
-    if (simulacao !== 'gestor_unidade') return painelBase;
-    return {
-      ...painelBase,
-      unidades: painelBase.unidades.filter((u) => u.sigla === unidade),
-      dados: painelBase.dados[unidade] ? { [unidade]: painelBase.dados[unidade] } : {},
-    };
-  };
-
-  const faixaSimulacao = () => {
-    const alvoFaixa = alvo.querySelector('[data-simulacao]');
-    if (!simulacao) {
-      alvoFaixa.innerHTML = '';
-      return;
+  /** Erro comum às abas: sessão vencida ou troca de senha pendente. Devolve true se tratou. */
+  const tratarErroSessao = async (e, repetir) => {
+    if (e.status === 401) {
+      toast('Sua sessão expirou. Entre novamente.');
+      aoSair();
+      return true;
     }
-    const quem = simulacao === 'faturista' ? 'Faturista' : `Gestor de unidade (${esc(unidade)})`;
-    const como = simulacao === 'faturista'
-      ? 'O faturista não acessa o painel: só processa as análises e envia os totais da unidade dele.'
-      : 'Só a unidade dele aparece, sem comparação com as demais. Troque a unidade no filtro para simular outro gestor.';
-    alvoFaixa.innerHTML = `<div class="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-aviso/20 bg-aviso-50 px-4 py-3 text-sm text-aviso" role="status">
-      <p class="min-w-0 flex-1"><strong>Simulação de perfil:</strong> você está vendo a Área do gestor como <strong>${quem}</strong>. ${como} Suas permissões reais não mudam.</p>
-      <button type="button" class="btn-secundario h-8 px-3 text-[13px]" data-encerrar-simulacao>Voltar ao meu perfil</button></div>`;
-    alvoFaixa.querySelector('[data-encerrar-simulacao]').addEventListener('click', () => trocarSimulacao(''));
+    if (e.codigo === 'trocar_senha') {
+      if (await abrirTrocaSenha({ obrigatoria: true })) repetir();
+      else aoSair();
+      return true;
+    }
+    return false;
   };
 
   const desenhar = async () => {
     const conteudo = alvo.querySelector('[data-conteudo]');
-    faixaSimulacao();
-    if (simulacao === 'faturista') {
-      conteudo.innerHTML = `<div class="cartao px-6 py-8">
-        <p class="display text-[17px] font-bold text-azul">O perfil Faturista não acessa o painel gerencial</p>
-        <p class="mt-2 max-w-2xl text-sm text-suave">Ao abrir a Área do gestor, ele vê a mensagem “Seu perfil não tem acesso ao painel gerencial”. O que ele faz no sistema:</p>
-        <ul class="mt-3 max-w-2xl list-disc space-y-1 pl-5 text-sm text-tinta">
-          <li>Processa as análises nas três ferramentas, como qualquer usuário, sem precisar de login.</li>
-          <li>Ao fim de cada análise, entra com o próprio login e clica em <strong>Enviar ao painel gerencial</strong>.</li>
-          <li>Só consegue enviar resultados das unidades às quais está vinculado.</li>
-        </ul>
-        <div class="mt-6 overflow-x-auto rounded-lg border border-linha"><table class="tabela">
-          <thead><tr><th>Perfil</th><th>Envia resumos</th><th>Vê o painel</th></tr></thead>
-          <tbody>
-            <tr><td class="font-semibold">Faturista</td><td>das unidades dele</td><td>não</td></tr>
-            <tr><td class="font-semibold">Gestor de unidade</td><td>das unidades dele</td><td>só das unidades dele</td></tr>
-            <tr><td class="font-semibold">Gestão central</td><td>de todas</td><td>de todas</td></tr>
-            <tr><td class="font-semibold">Administrador</td><td>de todas</td><td>de todas</td></tr>
-          </tbody></table></div></div>`;
-      return;
-    }
-    const painel = visao();
     const comDados = Object.keys(painel.dados);
     if (!comDados.length) {
       conteudo.innerHTML = vazioHtml('Nenhum resumo recebido ainda',
@@ -317,8 +383,6 @@ export async function renderizarPainel(alvo, aoSair) {
         ${kpi('Linhas BPA com alerta', fmtPct(pct(a.bpaAlerta, a.linhasBpa)), `<span class="text-[13px] text-suave">${numero(a.bpaAlerta)} de ${numero(a.linhasBpa)} linhas</span>`)}
         ${kpi('Pendências cadastrais', numero(a.pendencias), variacao(a.pendencias, a.pendenciasAnt, true))}
       </div>
-
-      ${htmlAlarmes(calcularAlarmes(painel, siglas, i), mes)}
 
       <div class="rounded-lg border border-turquesa-100 bg-turquesa-50/80 px-5 py-4 text-sm text-azul">
         <p class="font-semibold">Destaques de ${esc(nomeMes(mes))}${unidade ? ` · ${esc(unidade)}` : ' · todas as unidades'}</p>
@@ -423,69 +487,88 @@ export async function renderizarPainel(alvo, aoSair) {
   const carregar = async (ate) => {
     alvo.querySelector('[data-conteudo]').innerHTML = '<p class="py-12 text-center text-sm text-suave">Carregando o painel…</p>';
     try {
-      painelBase = await f.painel(ate);
+      painel = await f.painel(ate);
     } catch (e) {
-      if (e.status === 401) {
-        toast('Sua sessão expirou. Entre novamente.');
-        aoSair();
-        return;
-      }
-      alvo.querySelector('[data-conteudo]').innerHTML = vazioHtml('Não foi possível carregar o painel', e.message);
+      if (await tratarErroSessao(e, () => carregar(ate))) return;
+      if (aba === 'painel') alvo.querySelector('[data-conteudo]').innerHTML = vazioHtml('Não foi possível carregar o painel', e.message);
       return;
     }
+    if (aba !== 'painel') return; // trocou de aba enquanto carregava
     const selMes = alvo.querySelector('[data-filtro-mes]');
-    const opcoes = [...new Set([painelBase.competencias.at(-1), ...(painelBase.disponiveis || [])])].sort().reverse();
+    const opcoes = [...new Set([painel.competencias.at(-1), ...(painel.disponiveis || [])])].sort().reverse();
     selMes.innerHTML = opcoes.map((m) => `<option value="${esc(m)}">${esc(nomeMes(m))}</option>`).join('');
-    selMes.value = painelBase.competencias.at(-1);
+    selMes.value = painel.competencias.at(-1);
     const selUn = alvo.querySelector('[data-filtro-unidade]');
     if (selUn.options.length <= 1) {
-      selUn.innerHTML = `<option value="">Todas as unidades</option>${painelBase.unidades.map((u) => `<option value="${esc(u.sigla)}">${esc(u.sigla)} — ${esc(u.nome)}</option>`).join('')}`;
-      if (painelBase.unidades.length === 1) unidade = painelBase.unidades[0].sigla;
+      selUn.innerHTML = `<option value="">Todas as unidades</option>${painel.unidades.map((u) => `<option value="${esc(u.sigla)}">${esc(u.sigla)} — ${esc(u.nome)}</option>`).join('')}`;
+      if (painel.unidades.length === 1) unidade = painel.unidades[0].sigla;
     }
-    selUn.options[0].disabled = simulacao === 'gestor_unidade';
     selUn.value = unidade;
     await desenhar();
   };
 
-  function trocarSimulacao(valor) {
-    simulacao = valor;
-    const selPerfil = alvo.querySelector('[data-filtro-perfil]');
-    if (selPerfil) selPerfil.value = valor;
-    const selUn = alvo.querySelector('[data-filtro-unidade]');
-    selUn.options[0].disabled = valor === 'gestor_unidade';
-    if (valor === 'gestor_unidade' && !unidade) unidade = Object.keys(painelBase.dados)[0] || painelBase.unidades[0]?.sigla || '';
-    if (!valor && painelBase.unidades.length > 1) unidade = '';
-    selUn.value = unidade;
-    desenhar();
-  }
+  const carregarHistorico = async () => {
+    const conteudo = alvo.querySelector('[data-conteudo]');
+    conteudo.innerHTML = '<p class="py-12 text-center text-sm text-suave">Carregando o histórico…</p>';
+    try {
+      const { envios } = await api.historico({ sigla: unidade, ferramenta });
+      if (aba === 'historico') conteudo.innerHTML = tabelaHistorico(envios);
+    } catch (e) {
+      if (await tratarErroSessao(e, carregarHistorico)) return;
+      conteudo.innerHTML = vazioHtml('Não foi possível carregar o histórico', e.message);
+    }
+  };
+
+  /** Mostra a aba e os filtros que valem para ela. */
+  const abrirAba = async (nova) => {
+    aba = nova;
+    alvo.querySelectorAll('[data-aba-gestor]').forEach((b) => {
+      const ativa = b.dataset.abaGestor === aba;
+      b.setAttribute('aria-selected', String(ativa));
+      b.tabIndex = ativa ? 0 : -1;
+    });
+    alvo.querySelectorAll('[data-so]').forEach((el) => { el.hidden = !el.dataset.so.split(' ').includes(aba); });
+    if (aba === 'painel') await carregar(alvo.querySelector('[data-filtro-mes]').value || undefined);
+    else if (aba === 'historico') await carregarHistorico();
+    else {
+      const conteudo = alvo.querySelector('[data-conteudo]');
+      await renderizarUsuarios(conteudo, { emailAtual: usuario.email, aoErro: (e) => tratarErroSessao(e, () => abrirAba('usuarios')) });
+    }
+  };
 
   const perfil = PERFIS[usuario.perfil] || usuario.perfil;
   alvo.innerHTML = `
-    <div class="mb-8 flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
+    <div class="mb-6 flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
       <div class="max-w-3xl">
-        <div class="mb-2 flex flex-wrap gap-2"><span class="etiqueta etiqueta-servidor">Versão beta</span><span class="etiqueta etiqueta-neutra">${esc(usuario.nome || 'gestor')} · ${esc(perfil)}</span></div>
+        <div class="mb-2 flex flex-wrap gap-2">${real_
+          ? '<span class="etiqueta etiqueta-ok">Dados enviados pelas unidades</span>'
+          : '<span class="etiqueta etiqueta-pendente">Protótipo · dados fictícios</span>'}<span class="etiqueta etiqueta-neutra">${esc(usuario.nome || 'gestor')} · ${esc(perfil)}</span></div>
         <h1 class="text-[30px] leading-tight sm:text-[34px]">Painel gerencial</h1>
         <p class="mt-2 text-suave">Produção e qualidade do faturamento das unidades da FHEMIG, consolidadas a partir das análises do Fatura Hospitalar, do Fatura Ambulatorial e do ChecaProfissionais.</p>
       </div>
       <div class="flex flex-wrap items-end gap-3">
-        ${podeSimular ? `<label class="flex flex-col gap-1"><span class="rotulo">Ver como</span>
-          <select class="campo w-52" data-filtro-perfil>
-            <option value="">Meu perfil (${esc(perfil)})</option>
-            <option value="gestor_unidade">Gestor de unidade</option>
-            <option value="faturista">Faturista</option>
-          </select></label>` : ''}
-        <label class="flex flex-col gap-1"><span class="rotulo">Competência</span>
+        <label class="flex flex-col gap-1" data-so="painel"><span class="rotulo">Competência</span>
           <select class="campo w-36" data-filtro-mes></select></label>
-        <label class="flex flex-col gap-1"><span class="rotulo">Unidade</span>
+        <label class="flex flex-col gap-1" data-so="painel historico"><span class="rotulo">Unidade</span>
           <select class="campo w-56" data-filtro-unidade><option value="">Todas as unidades</option></select></label>
+        <label class="flex flex-col gap-1" data-so="historico" hidden><span class="rotulo">Ferramenta</span>
+          <select class="campo w-44" data-filtro-ferramenta><option value="">Todas</option>${Object.entries(NOME_FERRAMENTA).map(([id, nome]) => `<option value="${esc(id)}">${esc(nome)}</option>`).join('')}</select></label>
+        ${real_ ? '<button type="button" class="btn-secundario" data-trocar-senha>Trocar senha</button>' : ''}
         <button type="button" class="btn-secundario" data-sair>Sair</button>
       </div>
     </div>
-    <div data-simulacao></div>
+    ${abas.length ? `<div class="mb-6 flex gap-6 overflow-x-auto border-b border-linha" role="tablist" aria-label="Seções da Área do gestor">${abas.map(([id, nome]) => `
+      <button type="button" role="tab" class="aba" data-aba-gestor="${esc(id)}" aria-selected="${id === aba}" tabindex="${id === aba ? 0 : -1}">${esc(nome)}</button>`).join('')}</div>` : ''}
     <div class="space-y-6" data-conteudo></div>`;
-  alvo.querySelector('[data-filtro-perfil]')?.addEventListener('change', (e) => trocarSimulacao(e.target.value));
   alvo.querySelector('[data-filtro-mes]').addEventListener('change', (e) => carregar(e.target.value));
-  alvo.querySelector('[data-filtro-unidade]').addEventListener('change', (e) => { unidade = e.target.value; desenhar(); });
+  alvo.querySelector('[data-filtro-unidade]').addEventListener('change', (e) => {
+    unidade = e.target.value;
+    if (aba === 'historico') carregarHistorico();
+    else desenhar();
+  });
+  alvo.querySelector('[data-filtro-ferramenta]').addEventListener('change', (e) => { ferramenta = e.target.value; carregarHistorico(); });
+  alvo.querySelectorAll('[data-aba-gestor]').forEach((b) => b.addEventListener('click', () => abrirAba(b.dataset.abaGestor)));
+  alvo.querySelector('[data-trocar-senha]')?.addEventListener('click', () => abrirTrocaSenha());
   alvo.querySelector('[data-sair]').addEventListener('click', async () => {
     await f.sair().catch(() => {});
     usuario = null;
